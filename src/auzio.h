@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <assert.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;
@@ -24,10 +25,9 @@ typedef i64 b64;
 #define global_var static
 
 #if EDITORE_DEBUG
-// TODO: complete assertion macro
-#define assert(expression) if(!(expression)) {printf("Assertion failed!\n"); *(volatile int *)0 = 0;}
+#define ASSERT(expression) assert(expression)
 #else
-#define assert(expression)
+#define ASSERT(expression)
 #endif
 
 #define array_count(arr) (sizeof(arr) / sizeof((arr)[0]))
