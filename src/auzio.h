@@ -30,7 +30,7 @@ typedef i64 b64;
 #define ASSERT(expression)
 #endif
 
-#define array_count(arr) (sizeof(arr) / sizeof((arr)[0]))
+#define ARRAY_COUNT(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define min(x, y) ((x) < (y) ? (x) : (y))
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
