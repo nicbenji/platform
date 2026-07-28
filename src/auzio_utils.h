@@ -1,4 +1,4 @@
-#ifndef EDITORE_H
+#ifndef AUZIO_UTILS_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -20,6 +20,9 @@ typedef i16 b16;
 typedef i32 b32;
 typedef i64 b64;
 
+typedef float f32;
+typedef double f64;
+
 #define internal static
 #define local_persist static
 #define global_var static
@@ -29,6 +32,9 @@ typedef i64 b64;
 #else
 #define ASSERT(expression)
 #endif
+
+#define INVALID_CODE_PATH ASSERT(!"Invalid code path")
+#define INVALID_DEFAULT_CASE default: { ASSERT(!"Invalid code path"); }
 
 #define ARRAY_COUNT(arr) (sizeof(arr) / sizeof((arr)[0]))
 #define min(x, y) ((x) < (y) ? (x) : (y))
@@ -40,5 +46,5 @@ typedef i64 b64;
 #define GiB(value) (MiB(value) * 1024)
 #define TiB(value) (GiB(value) * 1024)
 
-#define EDITORE_H
+#define AUZIO_UTILS_H
 #endif
