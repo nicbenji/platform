@@ -1,0 +1,15 @@
+void glGenBuffers(GLsizei n, GLuint * buffers);
+void glBindBuffer(GLenum target, GLuint buffer);
+void glBufferData(GLenum target, GLsizeiptr size, const GLvoid * data, GLenum usage);
+GLuint glCreateShader(GLenum shaderType);
+void glDeleteShader(GLuint shader);
+void glAttachShader(GLuint program, GLuint shader);
+void glGetShaderSource(GLuint shader, GLsizei bufSize, GLsizei * length, GLchar * source);
+void glCompileShader(GLuint shader);
+GLuint glCreateProgram(void);
+void glLinkProgram(GLuint program);
+void glUseProgram(GLuint program);
+void glGetShaderiv(GLuint shader, GLenum pname, GLint *params);
+void glGetProgramiv(GLuint program, GLenum pname, GLint *params);
+void glGetShaderInfoLog(GLuint shader, GLsizei maxLength, GLsizei *length, GLchar *infoLog);
+void glGetProgramInfoLog(GLuint program, GLsizei maxLength, GLsizei *length, GLchar *infoLog);

@@ -1,0 +1,5 @@
+struct wl_display *wl_display_connect(const char *name);
+struct wl_registry *wl_display_get_registry(struct wl_display *wl_display);
+int wl_registry_add_listener(struct wl_registry *wl_registry, const struct wl_registry_listener *listener, void *data);
+int wl_display_roundtrip(struct wl_display *display);
+struct wl_surface *wl_compositor_create_surface(struct wl_compositor *wl_compositor);
