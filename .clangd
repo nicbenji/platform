@@ -3,5 +3,5 @@ CompileFlags:
   Add:
     - -include
     - /home/nicben/coding/c/auzio/unity_build.h
-    - -DEDITORE_DEBUG=1
+    - -DBUILD_DEBUG=1
     - -DWM_WAYLAND=1

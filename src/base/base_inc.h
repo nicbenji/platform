@@ -4,5 +4,9 @@
 #include "base_platform_context.h"
 #include "base_common.h"
 
+#include "base_memory.h"
+#include "base_arena.h"
+#include "base_strings.h"
+
 #endif  // BASE_INC_H_
 

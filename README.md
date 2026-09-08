@@ -1,7 +1,6 @@
 # Auzio (Editore)
 My attempt at writing a basic graphical text editor.
 
-// FIXME: needs dependencies e.g. glfw + clang - also missing windows build
 To compile from source just run `./build.sh`. 
 
 

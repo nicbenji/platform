@@ -53,31 +53,31 @@ typedef double F64;
 #  error AlignOf needs to be defined for this compiler
 #endif
 
+#define AlignUpPow2(x, align) ((x) + ((align) - 1) & (~((align) - 1)))
+
 /* Memory ops */
-#include <string.h> // TODO: replace with own impls??
-#define MemoryCopy(dst, src, size)    memmove((dst), (src), (size))
-#define MemorySet(dst, byte, size)    memset((dst), (byte), (size))
-#define MemoryCompare(a, b, size)     memcmp((a), (b), (size))
+#include <string.h>
+#define MemCopy(dst, src, size) memmove((dst), (src), (size))
+#define MemSet(dst, byte, size) memset((dst), (byte), (size))
+#define MemCompare(a, b, size) memcmp((a), (b), (size))
 
-#define MemoryCopyStruct(dst, src) MemoryCopy((dst), (src), sizeof(*(d)))
-#define MemoryCopyArray(dst, src) MemoryCopy((dst), (src), sizeof(d))
-#define MemoryCopyTyped(dst, src, count) MemoryCopy((dst), (src), sizeof(*(d)) * (count))
+#define MemCopyStruct(dst, src) MemoryCopy((dst), (src), sizeof(*(d)))
+#define MemCopyArray(dst, src) MemoryCopy((dst), (src), sizeof(d))
+#define MemCopyTyped(dst, src, count) MemoryCopy((dst), (src), sizeof(*(d)) * (count))
 
-#define MemoryZero(src, count) memset((src), 0, (count))
-#define MemoryZeroStruct(src) MemoryZero((src), sizeof(*(src)))
-#define MemoryZeroArray(arr) MemoryZero((arr), sizeof(arr))
-#define MemoryZeroTyped(typed_ptr, count) MemoryZero(typed_ptr), sizeof(*(typed_ptr)) * (count))
+#define MemZero(src, count) memset((src), 0, (count))
+#define MemZeroStruct(src) MemoryZero((src), sizeof(*(src)))
+#define MemZeroArray(arr) MemoryZero((arr), sizeof(arr))
+#define MemZeroTyped(typed_ptr, count) MemoryZero(typed_ptr), sizeof(*(typed_ptr)) * (count))
 
-#define MemoryMatch(a, b, z) (MemoryCompare((a), (b), (z)) == 0)
-#define MemoryMatchStruct(a, b) MemoryMatch((a), (b), sizeof(*(a)))
-#define MemoryMatchArray(a, b) MemoryMatch((a), (b), sizeof(a))
-
-#define MemoryIsZeroStruct(ptr) memory_is_zero((ptr), sizeof(*(ptr)))
+#define MemMatch(a, b, z) (MemoryCompare((a), (b), (z)) == 0)
+#define MemMatchStruct(a, b) MemoryMatch((a), (b), sizeof(*(a)))
+#define MemMatchArray(a, b) MemoryMatch((a), (b), sizeof(a))
 
 /* Assert */
 // NOTE: Define the DISABLE_ASSERT macro to disable the Assert macro.
 
-#if !defined(DISABLE_ASSERT)
+#if !defined(BUILD_DEBUG)
 #  include <assert.h>
 #  define Assert(x) assert(x)
 #else
@@ -104,19 +104,27 @@ typedef double F64;
 #define Glue(x, y) Glue_(x, y)
 
 #if ARCH_X64
-#  define IntFromPtr(ptr) ((u64)(ptr))
+#  define IntFromPtr(ptr) ((U64)(ptr))
 #elif ARCH_X86
-#  define IntFromPtr(ptr) ((u32)(ptr))
+#  define IntFromPtr(ptr) ((U32)(ptr))
 #else
 #  error Missing pointer-to-integer cast for this architecture.
 #endif
 #define PtrFromInt(i) (void*)(i)
+
+#define IsPow2OrZero(x) (((x) & ((x) - 1)) == 0)
+#define IsPow2(x) (((x) != 0) && IsPow2OrZero(x))
 
 /* Units */
 #define KiB(value) ((value) * 1024)
 #define MiB(value) (KiB(value) * 1024)
 #define GiB(value) (MiB(value) * 1024)
 #define TiB(value) (GiB(value) * 1024)
+
+/* Misc */
+
+// OS-specific impl
+internal U64 sys_info_get_page_size(void);
 
 /* Constants */
 
