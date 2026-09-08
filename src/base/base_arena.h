@@ -12,8 +12,8 @@ typedef struct {
 
 #define MEM_ARENA_HEADER_SIZE sizeof(MemoryArena)
 
-internal MemoryArena *mem_arena(void *base_addr, U64 reserve_size, U64 commit_size);
-#define mem_arena_default() mem_arena(0, MiB(64), KiB(64))
+internal MemoryArena *mem_arena(U64 reserve_size, U64 commit_size);
+#define mem_arena_default() mem_arena(MiB(64), KiB(64))
 
 internal void mem_arena_free(MemoryArena *arena);
 

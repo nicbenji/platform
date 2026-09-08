@@ -33,7 +33,7 @@ typedef double F64;
 
 /* Linkage */
 #if LANGUAGE_CPP
-# define C_LINKAGE_BEGIN extern "C"{
+# define C_LINKAGE_BEGIN extern "C" {
 # define C_LINKAGE_END }
 # define C_LINKAGE extern "C"
 #else
@@ -56,28 +56,31 @@ typedef double F64;
 #define AlignUpPow2(x, align) ((x) + ((align) - 1) & (~((align) - 1)))
 
 /* Memory ops */
+
+internal B32 mem_is_zero(void *ptr, U64 size);
+
 #include <string.h>
 #define MemCopy(dst, src, size) memmove((dst), (src), (size))
 #define MemSet(dst, byte, size) memset((dst), (byte), (size))
 #define MemCompare(a, b, size) memcmp((a), (b), (size))
 
-#define MemCopyStruct(dst, src) MemoryCopy((dst), (src), sizeof(*(d)))
-#define MemCopyArray(dst, src) MemoryCopy((dst), (src), sizeof(d))
-#define MemCopyTyped(dst, src, count) MemoryCopy((dst), (src), sizeof(*(d)) * (count))
+#define MemCopyStruct(dst, src) MemCopy((dst), (src), sizeof(*(dst)))
+#define MemCopyArray(dst, src) MemCopy((dst), (src), sizeof(dst))
+#define MemCopyTyped(dst, src, count) MemCopy((dst), (src), sizeof(*(dst)) * (count))
 
-#define MemZero(src, count) memset((src), 0, (count))
-#define MemZeroStruct(src) MemoryZero((src), sizeof(*(src)))
-#define MemZeroArray(arr) MemoryZero((arr), sizeof(arr))
-#define MemZeroTyped(typed_ptr, count) MemoryZero(typed_ptr), sizeof(*(typed_ptr)) * (count))
+#define MemZero(src, count) MemSet((src), 0, (count))
+#define MemZeroStruct(src) MemZero((src), sizeof(*(src)))
+#define MemZeroArray(arr) MemZero((arr), sizeof(arr))
+#define MemZeroTyped(typed_ptr, count) MemZero(typed_ptr), sizeof(*(typed_ptr)) * (count))
 
-#define MemMatch(a, b, z) (MemoryCompare((a), (b), (z)) == 0)
-#define MemMatchStruct(a, b) MemoryMatch((a), (b), sizeof(*(a)))
-#define MemMatchArray(a, b) MemoryMatch((a), (b), sizeof(a))
+#define MemMatch(a, b, z) (MemCompare((a), (b), (z)) == 0)
+#define MemMatchStruct(a, b) MemMatch((a), (b), sizeof(*(a)))
+#define MemMatchArray(a, b) MemMatch((a), (b), sizeof(a))
+
+#define MemIsZeroStruct(ptr) mem_is_zero(ptr, sizeof(*(ptr)))
 
 /* Assert */
-// NOTE: Define the DISABLE_ASSERT macro to disable the Assert macro.
-
-#if !defined(BUILD_DEBUG)
+#if defined(BUILD_DEBUG)
 #  include <assert.h>
 #  define Assert(x) assert(x)
 #else
@@ -97,6 +100,8 @@ typedef double F64;
 #define Min(x, y) ((x) < (y) ? (x) : (y))
 #define Max(x, y) ((x) > (y) ? (x) : (y))
 #define Clamp(a, x, b) (((x) < (a) ? (a) : ((x) > (b) ? (b) : (x))))
+#define ClampBot(x, y) Max(x, y)
+#define ClampTop(x, y) Min(x, y)
 
 #define Stringify_(s) #s
 #define Stringify(s) Stringify_(s)

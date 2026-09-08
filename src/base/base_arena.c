@@ -2,8 +2,7 @@
 // TODO: asan
 // TODO: scratch arena
 
-internal MemoryArena *
-mem_arena(void *base_addr, U64 reserve_size, U64 commit_size) {
+internal MemoryArena * mem_arena(U64 reserve_size, U64 commit_size) {
     Assert(reserve_size >= commit_size);
 
     // TODO: add MEM_ARENA_HEADER_SIZE explicitly?
@@ -11,7 +10,7 @@ mem_arena(void *base_addr, U64 reserve_size, U64 commit_size) {
     U64 aligned_commit_size = AlignUpPow2(commit_size, sys_info_get_page_size());
 
     // TODO: what to do on failures?
-    MemoryArena *result = mem_reserve(base_addr, aligned_reserve_size);
+    MemoryArena *result = mem_reserve(aligned_reserve_size);
     mem_commit(result, aligned_commit_size);
 
     if (result == 0) {
@@ -30,8 +29,10 @@ internal void mem_arena_free(MemoryArena *arena) {
     mem_free(arena, arena->reserved);
 }
 
-internal void *
-mem_arena_push(MemoryArena *arena, U64 size, U64 align, B32 zero) {
+internal void * mem_arena_push(
+    MemoryArena *arena,
+    U64 size, U64 align, B32 zero
+) {
     U64 prev_pos = AlignUpPow2(arena->pos, align);
     arena->pos = prev_pos + size;
 
@@ -48,7 +49,11 @@ mem_arena_push(MemoryArena *arena, U64 size, U64 align, B32 zero) {
         arena->committed = new_commit_size;
     }
 
-    void *result = (U8 *)arena + arena->pos;
+    void *result = (U8 *)arena + prev_pos;
+    if (zero) {
+        MemZero(result, size);
+    }
+
     return result;
 }
 
@@ -59,7 +64,7 @@ internal void mem_arena_clear(MemoryArena *arena) {
 internal void mem_arena_pop_to(MemoryArena *arena, U64 pos) {
     U64 new_pos = Max(MEM_ARENA_HEADER_SIZE, pos);
     Assert(new_pos <= arena->pos);
-    arena->pos = pos;
+    arena->pos = new_pos;
 }
 
 internal MemArena_Temp mem_arena_temp_begin(MemoryArena *arena) {

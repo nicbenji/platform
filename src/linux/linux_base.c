@@ -10,9 +10,8 @@
 
 global_var U64 global_page_size;
 
-internal void *mem_reserve(void *base_addr, U64 size) {
-    void *result
-        = mmap(base_addr, size, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+internal void *mem_reserve(U64 size) {
+    void *result = mmap(0, size, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
     if (result == MAP_FAILED) {
         result = 0;
     }
@@ -40,6 +39,6 @@ internal U64 sys_info_get_page_size(void) {
 int main(int argc, char **argv) {
     global_page_size = (U64)sysconf(_SC_PAGESIZE);
 
-    main_thread_entrypoint(argc, argv);
+    main_entrypoint(argc, argv);
 }
 

@@ -1,4 +1,4 @@
-internal void *mem_reserve(void *base_addr, U64 size) {
+internal void *mem_reserve(U64 size) {
 
 }
 
