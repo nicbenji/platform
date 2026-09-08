@@ -2,6 +2,6 @@ CompileFlags:
   Compiler: /usr/bin/clang
   Add:
     - -include
-    - /home/nicben/coding/c/auzio/unity_build.h
+    - /home/nicben/coding/c/platform/unity_build.h
     - -DBUILD_DEBUG=1
     - -DWM_WAYLAND=1

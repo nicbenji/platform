@@ -3,7 +3,7 @@
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 BUILD_PATH="$ROOT/build"
 LIB_PATH="$ROOT/libs"
-PROJECT_NAME="auzio"
+PROJECT_NAME="platform_test"
 MAIN_FILE="$ROOT/src/test_app.c"
 LIBS=""
 COMPILE_FLAGS="-DBUILD_DEBUG=1 -DWM_WAYLAND=1 -D_FILE_OFFSET_BITS=64"
@@ -19,12 +19,12 @@ fi
 cd $BUILD_PATH
 
 clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS \
-    "$ROOT/src/bindings_generator.c" \
-    -o bindings-generator
-./bindings-generator
+    "$ROOT/src/metagen.c" \
+    -o metagen
+./metagen
 
 clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS $MAIN_FILE \
-    -lGL -lglfw \
+    -lGL \
     -o $PROJECT_NAME.out
 
 CLANGD_FILE="$ROOT/.clangd"

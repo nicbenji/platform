@@ -1,5 +1,6 @@
-# Auzio (Editore)
-My attempt at writing a basic graphical text editor.
+# Platform
+Attempt at writing a generic reusable platform layer.
+Inspired by https://git.mr4th.com/mr4th-public/mr4th and https://github.com/EpicGames/raddebugger.
 
 To compile from source just run `./build.sh`. 
 

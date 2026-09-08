@@ -7,6 +7,7 @@
 #include "base_memory.h"
 #include "base_arena.h"
 #include "base_strings.h"
+#include "base_entrypoint.h"
 
 #endif  // BASE_INC_H_
 

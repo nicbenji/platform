@@ -39,5 +39,7 @@ internal U64 sys_info_get_page_size(void) {
 
 int main(int argc, char **argv) {
     global_page_size = (U64)sysconf(_SC_PAGESIZE);
+
+    main_thread_entrypoint(argc, argv);
 }
 

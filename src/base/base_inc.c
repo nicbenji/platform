@@ -1,5 +1,6 @@
 #include "base_arena.c"
 #include "base_strings.c"
+#include "base_entrypoint.c"
 
 #if OS_LINUX
 #  include "../linux/linux_base.c"
