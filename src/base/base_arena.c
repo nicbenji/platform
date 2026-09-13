@@ -2,7 +2,8 @@
 // TODO: asan
 // TODO: scratch arena
 
-internal MemoryArena * mem_arena(U64 reserve_size, U64 commit_size) {
+#include "base_arena.h"
+internal MemoryArena *mem_arena(U64 reserve_size, U64 commit_size) {
     Assert(reserve_size >= commit_size);
 
     // TODO: add MEM_ARENA_HEADER_SIZE explicitly?
@@ -59,6 +60,14 @@ internal void * mem_arena_push(
 
 internal void mem_arena_clear(MemoryArena *arena) {
     mem_arena_pop_to(arena, 0);
+}
+
+internal void mem_arena_pop(MemoryArena *arena, U64 amount) {
+    U64 new_pos = arena->pos;
+    if (amount < arena->pos) {
+        new_pos -= amount;
+    }
+    mem_arena_pop_to(arena, new_pos);
 }
 
 internal void mem_arena_pop_to(MemoryArena *arena, U64 pos) {

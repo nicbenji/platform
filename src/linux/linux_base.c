@@ -39,6 +39,12 @@ internal U64 sys_info_get_page_size(void) {
 int main(int argc, char **argv) {
     global_page_size = (U64)sysconf(_SC_PAGESIZE);
 
-    main_entrypoint(argc, argv);
+    Str8 utf8_args[argc];
+    for (int i = 0; i < argc; ++i) {
+        utf8_args[i] = str8_from_cstr(argv[i]);
+    }
+
+    int result = main_entrypoint(argc, utf8_args);
+    return result;
 }
 

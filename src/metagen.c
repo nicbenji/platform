@@ -36,7 +36,7 @@ internal Str8 bgen_read_entire_file(MemoryArena *arena, const char *file_path) {
     return result;
 }
 
-internal int main_entrypoint(int argc, char **argv) {
+internal int main_entrypoint(int argc, Str8 *argv) {
     MemoryArena *bgen_arena = mem_arena_default();
     Str8 func_signatures = bgen_read_entire_file(bgen_arena, "wl_client.signatures");
     printf("%.*s\n", str8_make_printable(func_signatures));

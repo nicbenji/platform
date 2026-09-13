@@ -1,8 +1,12 @@
 #if !defined(BASE_COMMON_H_)
 #define BASE_COMMON_H_
 
+// TODO: add read_only, thread and intrinsic stuff?
+
 /* Basic types */
 #include <stdint.h>
+#include <stdarg.h>
+#include <stdio.h>
 
 typedef uint8_t U8;
 typedef uint16_t U16;
@@ -53,6 +57,16 @@ typedef double F64;
 #  error AlignOf needs to be defined for this compiler
 #endif
 
+#if COMPILER_MSVC
+#  define MAX_ALIGN_T double
+#elif COMPILER_CLANG || COMPILER_GCC
+#  include <stddef.h>
+#  define MAX_ALIGN_T max_align_t
+#else
+#  error Missing MAX_ALIGN_T for this compiler.
+#endif
+
+
 #define AlignUpPow2(x, align) ((x) + ((align) - 1) & (~((align) - 1)))
 
 /* Memory ops */
@@ -80,18 +94,28 @@ internal B32 mem_is_zero(void *ptr, U64 size);
 #define MemIsZeroStruct(ptr) mem_is_zero(ptr, sizeof(*(ptr)))
 
 /* Assert */
-#if defined(BUILD_DEBUG)
-#  include <assert.h>
-#  define Assert(x) assert(x)
+
+#if COMPILER_MSVC
+# define Trap() __debugbreak()
+#elif COMPILER_CLANG || COMPILER_GCC
+# define Trap() __builtin_trap()
 #else
-#  define Assert(x) (void)(x)
+# error Unknown trap intrinsic for this compiler.
 #endif
 
-#define StaticAssert(condition, ID) global u8 Glue(ID, __LINE__)[(condition) ? 1 : -1]
+#define AssertAlways(x) do{if(!(x)) {Trap();}}while(0)
+#if BUILD_DEBUG
+# define Assert(x) AssertAlways(x)
+#else
+# define Assert(x) (void)(x)
+#endif
+
+#define StaticAssert(condition, ID) global_var U8 Glue(ID, __LINE__)[(condition) ? 1 : -1]
 
 #define Unreachable Assert(!"Invalid code path")
 #define UnreachableDefaultCase default: { Unreachable; } break
-#define NotImplemented Assert(!"Not implemented")
+#define Todo Assert(!"Todo")
+#define NoOp ((void)0)
 
 /* Simple helper macros */
 #define ArrayCount(arr) (sizeof(arr) / sizeof((arr)[0]))
@@ -120,6 +144,8 @@ internal B32 mem_is_zero(void *ptr, U64 size);
 #define IsPow2OrZero(x) (((x) & ((x) - 1)) == 0)
 #define IsPow2(x) (((x) != 0) && IsPow2OrZero(x))
 
+#define Pow2(x) (1 << (x))
+
 /* Units */
 #define KiB(value) ((value) * 1024)
 #define MiB(value) (KiB(value) * 1024)
@@ -131,46 +157,54 @@ internal B32 mem_is_zero(void *ptr, U64 size);
 // OS-specific impl
 internal U64 sys_info_get_page_size(void);
 
+/* Type conversions */
+
+internal U16 u16_safe_cast(U32 x);
+
 /* Constants */
 
-global_var U32 SIGN32 = 0x80000000;
-global_var U32 EXPONENT32 = 0x7F800000;
-global_var U32 MANTISSA32 = 0x007FFFFF;
+#define SIGN32 ((U32)0x80000000u)
+#define EXPONENT32 ((U32)0x7F800000u)
+#define MANTISSA32 ((U32)0x007FFFFFu)
 
-global_var F32 BIG_GOLDEN32 = 1.61803398875f;
-global_var F32 SMALL_GOLDEN32 = 0.61803398875f;
+#define BIG_GOLDEN32 ((F32)1.61803398875f)
+#define SMALL_GOLDEN32 ((F32)0.61803398875f)
 
-global_var F32 PI32 = 3.1415926535897f;
+#define PI32 ((F32)3.1415926535897f)
 
-global_var F64 MACHINE_EPSILON64 = 4.94065645841247e-324;
+#define MACHINE_EPSILON64 ((F64)4.94065645841247e-324)
 
-global_var U64 U64_MAX = 0xffffffffffffffffull;
-global_var U32 U32_MAX = 0xffffffff;
-global_var U16 U16_MAX = 0xffff;
-global_var U8 U8_MAX  = 0xff;
+#define U64_MAX ((U64)0xffffffffffffffffull)
+#define U32_MAX ((U32)0xffffffffu)
+#define U16_MAX ((U16)0xffffu)
+#define U8_MAX ((U8)0xffu)
 
-global_var S64 S64_MAX = (S64)0x7fffffffffffffffll;
-global_var S32 S32_MAX = (S32)0x7fffffff;
-global_var S16 S16_MAX = (S16)0x7fff;
-global_var S8 S8_MAX = (S8)0x7f;
+#define S64_MAX ((S64)0x7fffffffffffffffll)
+#define S32_MAX ((S32)0x7fffffff)
+#define S16_MAX ((S16)0x7fff)
+#define S8_MAX ((S8)0x7f)
 
-global_var S64 S64_MIN = (S64)0x8000000000000000ll;
-global_var S32 S32_MIN = (S32)0x80000000;
-global_var S16 S16_MIN = (S16)0x8000;
-global_var S8 S8_MIN = (S8)0x80;
+#define S64_MIN ((S64)-0x7fffffffffffffffll - 1)
+#define S32_MIN ((S32)-0x7fffffff - 1)
+#define S16_MIN ((S16)-0x7fff - 1)
+#define S8_MIN ((S8)-0x7f - 1)
+
 
 internal inline F32
 positive_inf32(void) {
-  union { U32 u; F32 f; } x;
-  x.u = EXPONENT32;
-  return(x.f);
+    union { U32 u; F32 f; } x;
+    x.u = EXPONENT32;
+    return(x.f);
 }
 
 internal inline F32
 negative_inf32(void) {
-  union { U32 u; F32 f; } x;
-  x.u = SIGN32 | EXPONENT32;
-  return(x.f);
+    union { U32 u; F32 f; } x;
+    x.u = SIGN32 | EXPONENT32;
+    return(x.f);
 }
+
+#define Bitmask(x) ((1ull << (x)) - 1)
+#define Bit(x) (1ull << ((x) - 1))
 
 #endif // BASE_COMMON_H_

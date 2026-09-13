@@ -18,3 +18,9 @@ internal B32 mem_is_zero(void *ptr, U64 size) {
 
     return true;
 }
+
+internal U16 u16_safe_cast(U32 x) {
+    AssertAlways(x <= U16_MAX);
+    U16 result = (U16)x;
+    return result;
+}

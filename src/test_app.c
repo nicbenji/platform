@@ -1,6 +1,8 @@
 #include "base/base_inc.h"
 #include "base/base_inc.c"
 
+#include <stdio.h>
+
 #define EvalPrint(x) printf("%s = %d\n", #x, (int)x)
 
 internal void test_ctx_cracking(void) {
@@ -87,13 +89,18 @@ internal void test_common(void) {
     MemIsZeroStruct(foo2);
 
     mem_arena_free(arena);
+
+    printf("%s = %lld\n", "S64_MIN", S64_MIN);
+    EvalPrint(S32_MIN);
+    EvalPrint(S16_MIN);
+    EvalPrint(S8_MIN);
 }
 
 internal void test_strings(void) {
 
 }
 
-internal int main_entrypoint(int argc, char **argv) {
+internal int main_entrypoint(int argc, Str8 *argv) {
     test_ctx_cracking();
     test_arena();
     test_common();

@@ -7,8 +7,7 @@ typedef struct {
     U64 committed;
 } MemoryArena;
 
-#include <stddef.h>
-#define MEM_ARENA_DEFAULT_ALIGN sizeof(max_align_t)
+#define MEM_ARENA_DEFAULT_ALIGN AlignOf(MAX_ALIGN_T)
 
 #define MEM_ARENA_HEADER_SIZE sizeof(MemoryArena)
 
@@ -30,6 +29,7 @@ internal void *mem_arena_push(MemoryArena *arena, U64 size, U64 align, B32 zero)
     mem_arena_push_array_zero(arena, T, 1)
 
 internal void mem_arena_clear(MemoryArena *arena);
+internal void mem_arena_pop(MemoryArena *arena, U64 amount);
 internal void mem_arena_pop_to(MemoryArena *arena, U64 pos);
 
 typedef struct {

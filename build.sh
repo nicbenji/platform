@@ -26,17 +26,3 @@ clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS \
 clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS $MAIN_FILE \
     -lGL \
     -o $PROJECT_NAME.out
-
-CLANGD_FILE="$ROOT/.clangd"
-if [[ ! -f $CLANGD_FILE && $1 == "dev-setup" ]]; then
-cat > $CLANGD_FILE << EOF
-CompileFlags:
-  Compiler: $(which clang)
-  Add:
-    - -include
-    - $ROOT/unity_build.h
-    - -DBUILD_DEBUG=1
-EOF
-fi
-
-
