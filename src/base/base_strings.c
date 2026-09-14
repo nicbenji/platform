@@ -1,4 +1,3 @@
-#include "base_common.h"
 internal Str8 str8(U8 *begin, U64 length) {
     Str8 result = { begin, length };
     return result;
@@ -10,8 +9,17 @@ internal Str8 str8_from_cstr(const char *cstr) {
     return result;
 }
 
-internal Str16 str16(U16 *wstr, U64 length) {
-    Str16 result = { wstr, length };
+internal Str16 str16(U16 *begin, U64 length) {
+    Str16 result = { begin, length };
+    return result;
+}
+
+internal Str8 str8_copy(MemoryArena *arena, Str8 utf8_str) {
+    Str8 result;
+    result.length = utf8_str.length;
+    result.begin = mem_arena_push_array(arena, U8, result.length + 1);
+    MemCopy(result.begin, utf8_str.begin, result.length);
+    result.begin[result.length] = '\0';
     return result;
 }
 
@@ -27,7 +35,7 @@ internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str) {
 
     UnicodeDecoder decoded;
     for (; ptr < one_past_last; ptr += decoded.size) {
-        decoded = utf16_decode(ptr, one_past_last - ptr);
+        decoded = utf16_decode(ptr, (U64)(one_past_last - ptr));
         result.length += utf8_encode(utf8_str + result.length, decoded.codepoint);
     }
     utf8_str[result.length] = '\0';
@@ -50,7 +58,7 @@ internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
 
     UnicodeDecoder decoded;
     for (; ptr < one_past_last; ptr += decoded.size) {
-        decoded = utf8_decode(ptr, one_past_last - ptr);
+        decoded = utf8_decode(ptr, (U64)(one_past_last - ptr));
         result.length += utf16_encode(utf16_str + result.length, decoded.codepoint);
     }
     utf16_str[result.length] = '\0';
@@ -62,7 +70,6 @@ internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
 }
 
 #define UTF8_CONT_BITS_AMT 6
-#define UNICODE_INVALID_CODEPOINT 0
 
 global_var U8 utf8_class[32] = {
       1,1,1,1,1,1,1,1,
@@ -134,7 +141,7 @@ internal UnicodeDecoder utf16_decode(U16 *str, U64 max) {
         && str[0] >= 0xd800 && str[0] <= 0xdbff
         && str[1] >= 0xdc00 && str[1] <= 0xdfff;
     if (is_surrogate_pair) {
-        U32 high_surrogate = (str[0] - 0xd800) << 10;
+        U32 high_surrogate = (str[0] - 0xd800u) << 10;
         U32 low_surrogate = str[1] - 0xdc00;
         result.codepoint = (high_surrogate | low_surrogate) + 0x10000;
         result.size = 2;

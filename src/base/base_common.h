@@ -29,10 +29,20 @@ typedef S64 B64;
 typedef float F32;
 typedef double F64;
 
+typedef void VoidProc(void);
+
 /* Static aliases */
 #define internal static
 #define local_persist static
 #define global_var static
+
+#if COMPILER_MSVC
+# define thread_local __declspec(thread)
+#elif COMPILER_CLANG || COMPILER_GCC
+# define thread_local __thread
+#else
+# error thread_local not defined for this compiler.
+#endif
 
 
 /* Linkage */
@@ -160,6 +170,7 @@ internal U64 sys_info_get_page_size(void);
 /* Type conversions */
 
 internal U16 u16_safe_cast(U32 x);
+internal S64 s64_safe_cast(U64 x);
 
 /* Constants */
 

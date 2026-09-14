@@ -7,8 +7,8 @@ typedef WL_DISPLAY_CONNECT(Wl_DisplayConnectFn);
 
 typedef struct {
     Wl_DisplayConnectFn *display_connect;
-} Wl_Funcs;
+} Wl_Functions;
 
-internal B32 wl_load_funcs(void *wl_client_lib, Wl_Funcs *wl);
+internal B32 wl_load_functions(LibraryHandle wl_client_lib, Wl_Functions *wl);
 
 #endif // WL_CLIENT_LOADER_H_

@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <windows.h>
 
 global_var U64 global_page_size;
@@ -59,7 +58,6 @@ int wWinMain(
     HINSTANCE instance, HINSTANCE prev_instance,
     PWSTR cmd_line, int show_code
 ) {
-    AttachConsole(ATTACH_PARENT_PROCESS);
     int result = w32_entrypoint(__argc, __wargv);
     return result;
 }
