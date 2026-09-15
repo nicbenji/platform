@@ -4,5 +4,5 @@ typedef struct {
 
 // NOTE: OS-specific impl
 
-internal LibraryHandle dynlib_load(const char *lib);
-internal VoidProc *dynlib_load_proc(LibraryHandle lib, const char *symbol);
+internal LibraryHandle dynlib_load(Str8 lib_path);
+internal VoidProc *dynlib_load_proc(LibraryHandle lib, Str8 proc_name);

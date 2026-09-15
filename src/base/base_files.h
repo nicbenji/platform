@@ -18,6 +18,7 @@ internal B32 file_valid(FileHandle file);
 internal FileHandle file_open(Str8 file_path, FileAccessFlags flags);
 internal void file_close(FileHandle file);
 internal U64 file_get_size(FileHandle file);
+// TODO: probably more nicely chunked reads -> profiler needed
 internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer);
 
 

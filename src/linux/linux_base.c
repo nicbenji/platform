@@ -79,11 +79,12 @@ internal U64 file_get_size(FileHandle file) {
     struct stat file_stats;
     int fd = (int)file.u64[0];
     fstat(fd, &file_stats);
-    U64 result = (U64)file_stats.st_size;
+    U64 result = s64_safe_cast(file_stats.st_size);
     return result;
 }
 
 internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
+    Assert(end >= start);
     int fd = (int)file.u64[0];
 
     U64 bytes_read = 0;
@@ -94,11 +95,11 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
             left_to_read, s64_safe_cast(start + bytes_read)
         );
 
-        if (read_result >= 0) {
+        if (read_result > 0) {
             bytes_read += (U64)read_result;
             left_to_read -= (U64)read_result;
         } else {
-            // TODO: diagnostic + error handling
+            // TODO: EOF == 0 vs. diagnostic + error handling <0
             // e.g. EINTR??
             break;
         }
@@ -108,15 +109,25 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
 
 /* Dynamic libs */
 
-internal LibraryHandle dynlib_load(const char *lib_path) {
-    void *dynlib = dlopen(lib_path, RTLD_NOW);
+internal LibraryHandle dynlib_load(Str8 lib_path) {
+    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    Str8 lib_path_copy = str8_copy(scratch.arena, lib_path);
+
+    void *dynlib = dlopen((const char *)lib_path_copy.begin, RTLD_NOW);
     LibraryHandle result = { (U64)dynlib };
+
+    thread_ctx_scratch_end(scratch);
     return result;
 }
 
-internal VoidProc *dynlib_load_proc(LibraryHandle lib, const char *proc_name) {
+internal VoidProc *dynlib_load_proc(LibraryHandle lib, Str8 proc_name) {
+    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    Str8 proc_name_copy = str8_copy(scratch.arena, proc_name);
+
     void *dynlib = (void *)lib.u64[0];
-    VoidProc *result = (VoidProc *)dlsym(dynlib, proc_name);
+    VoidProc *result = (VoidProc *)dlsym(dynlib, (const char *)proc_name_copy.begin);
+
+    thread_ctx_scratch_end(scratch);
     return result;
 }
 
@@ -135,7 +146,8 @@ int main(int argc, char **argv) {
     const char *window_manager = getenv("XDG_SESSION_TYPE");
     if (strcmp(window_manager, "wayland") == 0) {
 
-        LibraryHandle wl_client_lib = dynlib_load("libwayland-client.so.0");
+        LibraryHandle wl_client_lib 
+            = dynlib_load(str8_literal("libwayland-client.so.0"));
 
         Wl_Functions wl;
         if (!wl_load_functions(wl_client_lib, &wl)) {

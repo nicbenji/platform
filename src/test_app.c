@@ -90,7 +90,7 @@ internal void test_common(void) {
 
     mem_arena_free(arena);
 
-    printf("%s = %ld\n", "S64_MIN", S64_MIN);
+    printf("%s = %lld\n", "S64_MIN", S64_MIN);
     EvalPrint(S32_MIN);
     EvalPrint(S16_MIN);
     EvalPrint(S8_MIN);
