@@ -19,9 +19,26 @@ typedef struct {
 
 internal Str8 str8(U8 *begin, U64 length);
 internal Str8 str8_from_cstr(const char *cstr);
+internal Str8 str8_from_range(U8 *begin, U8 *one_past_last);
 internal Str16 str16(U16 *wstr, U64 length);
 
+#define str8_lit(cstr_lit) str8((U8 *)cstr_lit, sizeof(cstr_lit) - 1)
+#define str8_vargs(s) (int)((s).length), ((s).begin)
+
 internal Str8 str8_copy(MemoryArena *arena, Str8 utf8_str);
+
+typedef struct Str8ListNode Str8ListNode;
+struct Str8ListNode {
+    Str8ListNode *next;
+    Str8 str;
+};
+
+typedef struct {
+    Str8ListNode *first;
+    Str8ListNode *last;
+} Str8List;
+
+internal Str8List str8_split(MemoryArena *arena, Str8 str, U8* split_chars, U64 split_char_count);
 
 internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str);
 internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str);
@@ -45,7 +62,8 @@ internal UnicodeDecoder utf16_decode(U16 *str, U64 max);
 internal U32 utf8_encode(U8 *dst, U32 codepoint);
 internal U32 utf16_encode(U16 *dst, U32 codepoint);
 
-#define str8_literal(cstr_lit) str8((U8 *)cstr_lit, sizeof(cstr_lit) - 1)
-#define str8_make_printable(s) (int)((s).length), ((s).begin)
+/* Str8List ops */
+
+internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str);
 
 #endif  // BASE_STRINGS_H_

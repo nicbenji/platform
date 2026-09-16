@@ -81,7 +81,7 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
     HANDLE file_handle = (HANDLE)file.u64[0];
 
     U64 offset = start;
-    U8 *buf_ptr = buffer;
+    U8 *read_at = buffer;
     while (offset != end) {
         U32 read_amount = (U32)Min(U32_MAX, end - offset);
         DWORD read_result;
@@ -91,14 +91,14 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
         };
 
         if (
-            !ReadFile(file_handle, buf_ptr, read_amount, &read_result, &overlapped)
+            !ReadFile(file_handle, read_at, read_amount, &read_result, &overlapped)
             || read_result == 0
         ) {
             break;
         }
 
         offset += read_result;
-        buf_ptr += read_result;
+        read_at += read_result;
     }
     U64 bytes_read = offset - start;
     return bytes_read;

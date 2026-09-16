@@ -3,6 +3,7 @@
 
 #include "base_platform_context.h"
 #include "base_common.h"
+#include "base_linked_list.h"
 
 #include "base_memory.h"
 #include "base_arena.h"

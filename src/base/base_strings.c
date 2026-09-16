@@ -1,3 +1,5 @@
+/* Constructors */
+
 internal Str8 str8(U8 *begin, U64 length) {
     Str8 result = { begin, length };
     return result;
@@ -9,10 +11,18 @@ internal Str8 str8_from_cstr(const char *cstr) {
     return result;
 }
 
+internal Str8 str8_from_range(U8 *begin, U8 *one_past_last) {
+    U64 length = (U64)(one_past_last - begin);
+    Str8 result = str8(begin, length);
+    return result;
+}
+
 internal Str16 str16(U16 *begin, U64 length) {
     Str16 result = { begin, length };
     return result;
 }
+
+/* Str8 ops */
 
 internal Str8 str8_copy(MemoryArena *arena, Str8 utf8_str) {
     Str8 result;
@@ -23,6 +33,71 @@ internal Str8 str8_copy(MemoryArena *arena, Str8 utf8_str) {
     return result;
 }
 
+/*
+result.first = mem_arena_push_struct(arena, Str8ListNode);
+    result.first->str = str;
+
+    U8 *prev_split = str.begin;
+    U64 already_split_len = 0;
+    Str8ListNode *curr = result.first;
+    for (U64 char_idx = 0; char_idx < str.length; ++char_idx) {
+        U8 *c = &str.begin[char_idx];
+        for (U64 split_idx = 0; split_idx < split_char_count; ++split_idx) {
+            U8 *split_char = &split_chars[split_idx];
+            if (*c == *split_char) {
+                curr->str = str8(prev_split, char_idx - already_split_len);
+
+                prev_split = str.begin + char_idx + 1;
+                already_split_len += curr->str.length + 1;
+
+                Str8ListNode *next = mem_arena_push_struct(arena, Str8ListNode);
+                curr->next = next;
+                next->str = str8(prev_split, str.length - (char_idx + 1));
+
+                curr = next;
+                break;
+            }
+        }
+    }
+    // FIXME: what to do if no split -> set this to null?
+    result.last = curr;
+*/
+
+
+internal Str8List str8_split(
+    MemoryArena *arena, Str8 str,
+    U8* split_chars, U64 split_char_count
+) {
+    Str8List result = {0};
+
+    U8 *one_past_last = str.begin + str.length;
+    for (U8 *at = str.begin; at < one_past_last; ++at) {
+        U8 *first_char = at;
+        for (; at < one_past_last; ++at) {
+            B32 is_split_char = false;
+            for (U64 i = 0; i < split_char_count; ++i) {
+                if (*at == split_chars[i]) {
+                    is_split_char = true;
+                    break;
+                }
+            }
+
+            if (is_split_char) {
+                break;
+            }
+        }
+
+        Str8 split_str = str8_from_range(first_char, at);
+        if (split_str.length > 0) {
+            str8_list_push(arena, &result, split_str);
+        }
+    }
+
+    return result;
+}
+
+/* Conversion */
+
 internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str) {
     Str8 result = {0};
     if (utf16_str.length == 0) return result;
@@ -30,12 +105,12 @@ internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str) {
     U64 alloc_size = utf16_str.length * 3;
     U8 *utf8_str = mem_arena_push_array(arena, U8, alloc_size + 1); // +1 for '\0'
 
-    U16 *ptr = utf16_str.begin;
-    U16 *one_past_last = ptr + utf16_str.length;
+    U16 *at = utf16_str.begin;
+    U16 *one_past_last = at + utf16_str.length;
 
     UnicodeDecoder decoded;
-    for (; ptr < one_past_last; ptr += decoded.size) {
-        decoded = utf16_decode(ptr, (U64)(one_past_last - ptr));
+    for (; at < one_past_last; at += decoded.size) {
+        decoded = utf16_decode(at, (U64)(one_past_last - at));
         result.length += utf8_encode(utf8_str + result.length, decoded.codepoint);
     }
     utf8_str[result.length] = '\0';
@@ -53,12 +128,12 @@ internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
     U64 alloc_size = utf8_str.length * 2;
     U16 *utf16_str = mem_arena_push_array(arena, U16, alloc_size + 1); // +1 for '\0'
 
-    U8 *ptr = utf8_str.begin;
-    U8 *one_past_last = ptr + utf8_str.length;
+    U8 *at = utf8_str.begin;
+    U8 *one_past_last = at + utf8_str.length;
 
     UnicodeDecoder decoded;
-    for (; ptr < one_past_last; ptr += decoded.size) {
-        decoded = utf8_decode(ptr, (U64)(one_past_last - ptr));
+    for (; at < one_past_last; at += decoded.size) {
+        decoded = utf8_decode(at, (U64)(one_past_last - at));
         result.length += utf16_encode(utf16_str + result.length, decoded.codepoint);
     }
     utf16_str[result.length] = '\0';
@@ -68,6 +143,8 @@ internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
     result.begin = utf16_str;
     return result;
 }
+
+/* Unicode */
 
 #define UTF8_CONT_BITS_AMT 6
 
@@ -191,5 +268,14 @@ internal U32 utf16_encode(U16 *dst, U32 codepoint) {
     }
 
     return codepoint_size;
+}
+
+/* Str8List ops */
+
+internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str) {
+    Str8ListNode *new = mem_arena_push_struct(arena, Str8ListNode);
+    sll_queue_push_back(list->first, list->last, new);
+    new->str = str;
+    return new;
 }
 

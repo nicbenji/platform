@@ -1,3 +1,5 @@
+#define _FILE_OFFSET_BITS 64
+
 #include <stdlib.h>
 #include <string.h>
 #include <sys/mman.h>
@@ -79,7 +81,7 @@ internal U64 file_get_size(FileHandle file) {
     struct stat file_stats;
     int fd = (int)file.u64[0];
     fstat(fd, &file_stats);
-    U64 result = s64_safe_cast(file_stats.st_size);
+    U64 result = (U64)file_stats.st_size;
     return result;
 }
 
@@ -147,7 +149,7 @@ int main(int argc, char **argv) {
     if (strcmp(window_manager, "wayland") == 0) {
 
         LibraryHandle wl_client_lib 
-            = dynlib_load(str8_literal("libwayland-client.so.0"));
+            = dynlib_load(str8_lit("libwayland-client.so.0"));
 
         Wl_Functions wl;
         if (!wl_load_functions(wl_client_lib, &wl)) {

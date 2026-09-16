@@ -90,7 +90,12 @@ internal void test_common(void) {
 
     mem_arena_free(arena);
 
+    // TODO: platform-independent format specifiers for Str8 or sth?
+#if OS_WINDOWS
     printf("%s = %lld\n", "S64_MIN", S64_MIN);
+#elif OS_LINUX
+    printf("%s = %ld\n", "S64_MIN", S64_MIN);
+#endif
     EvalPrint(S32_MIN);
     EvalPrint(S16_MIN);
     EvalPrint(S8_MIN);
