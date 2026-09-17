@@ -1,5 +1,6 @@
 /* Constructors */
 
+#include "base_common.h"
 internal Str8 str8(U8 *begin, U64 length) {
     Str8 result = { begin, length };
     return result;
@@ -33,36 +34,15 @@ internal Str8 str8_copy(MemoryArena *arena, Str8 utf8_str) {
     return result;
 }
 
-/*
-result.first = mem_arena_push_struct(arena, Str8ListNode);
-    result.first->str = str;
-
-    U8 *prev_split = str.begin;
-    U64 already_split_len = 0;
-    Str8ListNode *curr = result.first;
-    for (U64 char_idx = 0; char_idx < str.length; ++char_idx) {
-        U8 *c = &str.begin[char_idx];
-        for (U64 split_idx = 0; split_idx < split_char_count; ++split_idx) {
-            U8 *split_char = &split_chars[split_idx];
-            if (*c == *split_char) {
-                curr->str = str8(prev_split, char_idx - already_split_len);
-
-                prev_split = str.begin + char_idx + 1;
-                already_split_len += curr->str.length + 1;
-
-                Str8ListNode *next = mem_arena_push_struct(arena, Str8ListNode);
-                curr->next = next;
-                next->str = str8(prev_split, str.length - (char_idx + 1));
-
-                curr = next;
-                break;
-            }
-        }
+internal B32 str8_equals(Str8 a, Str8 b) {
+    if (a.length != b.length) {
+        return false;
     }
-    // FIXME: what to do if no split -> set this to null?
-    result.last = curr;
-*/
 
+    // TODO: think about SIMD mem-compares?
+    B32 result = MemEquals(a.begin, b.begin, a.length);
+    return result;
+}
 
 internal Str8List str8_split(
     MemoryArena *arena, Str8 str,
@@ -275,7 +255,35 @@ internal U32 utf16_encode(U16 *dst, U32 codepoint) {
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str) {
     Str8ListNode *new = mem_arena_push_struct(arena, Str8ListNode);
     sll_queue_push_back(list->first, list->last, new);
+    ++list->node_count;
     new->str = str;
     return new;
+}
+
+/* Char helpers */
+internal B32 char_is_whitespace(U8 c) {
+    B32 result = c == ' ' || c == '\r' || c == '\n'
+        || c == '\t' || c == '\v' || c == '\f';
+    return result;
+}
+
+internal B32 char_is_lower(U8 c) {
+    B32 result = (c >= 'a' && c <= 'z');
+    return result;
+}
+
+internal B32 char_is_upper(U8 c) {
+    B32 result = (c >= 'A' && c <= 'Z');
+    return result;
+}
+
+internal B32 char_is_alpha(U8 c) {
+    B32 result = (char_is_lower(c) || char_is_upper(c));
+    return result;
+}
+
+internal B32 char_is_digit(U8 c) {
+    B32 result = false;
+    return result;
 }
 

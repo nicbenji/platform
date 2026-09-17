@@ -27,6 +27,6 @@ internal FileHandle file_zero(void) {
 
 internal B32 file_valid(FileHandle file) {
     FileHandle zero_handle = file_zero();
-    B32 result = !MemMatchStruct(&file, &zero_handle);
+    B32 result = !MemEqualsStruct(&file, &zero_handle);
     return result;
 }

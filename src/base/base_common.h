@@ -97,9 +97,9 @@ internal B32 mem_is_zero(void *ptr, U64 size);
 #define MemZeroArray(arr) MemZero((arr), sizeof(arr))
 #define MemZeroTyped(typed_ptr, count) MemZero(typed_ptr), sizeof(*(typed_ptr)) * (count))
 
-#define MemMatch(a, b, z) (MemCompare((a), (b), (z)) == 0)
-#define MemMatchStruct(a, b) MemMatch((a), (b), sizeof(*(a)))
-#define MemMatchArray(a, b) MemMatch((a), (b), sizeof(a))
+#define MemEquals(a, b, z) (MemCompare((a), (b), (z)) == 0)
+#define MemEqualsStruct(a, b) MemEquals((a), (b), sizeof(*(a)))
+#define MemEqualsArray(a, b) MemEquals((a), (b), sizeof(a))
 
 #define MemIsZeroStruct(ptr) mem_is_zero(ptr, sizeof(*(ptr)))
 

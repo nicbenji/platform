@@ -73,7 +73,7 @@ internal void test_common(void) {
 
     Foo *foo2 = mem_arena_push_struct(arena, Foo);
     MemCopyStruct(foo2, foo1);
-    Assert(MemMatchStruct(foo1, foo2));
+    Assert(MemEqualsStruct(foo1, foo2));
 
     foo2->bar = 1;
     foo2->baz = 1;
