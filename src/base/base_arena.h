@@ -23,11 +23,6 @@ internal void *mem_arena_push(MemoryArena *arena, U64 size, U64 align, B32 zero)
 #define mem_arena_push_array_zero(arena, T, count) \
     mem_arena_push(arena, sizeof(T) * (count), Max(AlignOf(T), MEM_ARENA_DEFAULT_ALIGN), true)
 
-#define mem_arena_push_struct(arena, T) \
-    mem_arena_push_array(arena, T, 1)
-#define mem_arena_push_struct_zero(arena, T) \
-    mem_arena_push_array_zero(arena, T, 1)
-
 internal void mem_arena_clear(MemoryArena *arena);
 internal void mem_arena_pop(MemoryArena *arena, U64 amount);
 internal void mem_arena_pop_to(MemoryArena *arena, U64 pos);

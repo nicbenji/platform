@@ -4,7 +4,7 @@ internal ThreadContext *thread_ctx(void) {
     MemoryArena *scratch_arena0 = mem_arena_default();
     MemoryArena *scratch_arena1 = mem_arena_default();
 
-    ThreadContext *result = mem_arena_push_struct(scratch_arena0, ThreadContext);
+    ThreadContext *result = mem_arena_push_array(scratch_arena0, ThreadContext, 1);
     result->scratch_arenas[0] = scratch_arena0;
     result->scratch_arenas[1] = scratch_arena1;
     return result;

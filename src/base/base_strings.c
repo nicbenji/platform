@@ -253,37 +253,70 @@ internal U32 utf16_encode(U16 *dst, U32 codepoint) {
 /* Str8List ops */
 
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str) {
-    Str8ListNode *new = mem_arena_push_struct(arena, Str8ListNode);
+    Str8ListNode *new = mem_arena_push_array(arena, Str8ListNode, 1);
     sll_queue_push_back(list->first, list->last, new);
     ++list->node_count;
+    list->total_length += str.length;
     new->str = str;
     return new;
 }
 
-/* Char helpers */
-internal B32 char_is_whitespace(U8 c) {
-    B32 result = c == ' ' || c == '\r' || c == '\n'
-        || c == '\t' || c == '\v' || c == '\f';
+internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *joiner) {
+    U64 separator_count = 0;
+    if (list->node_count > 0) {
+        separator_count = list->node_count - 1;
+    }
+
+    Str8 result;
+    result.length = list->total_length
+        + joiner->prefix.length
+        + joiner->postfix.length
+        + (separator_count * joiner->separator.length);
+    result.begin = mem_arena_push_array(arena, U8, result.length + 1);
+
+    U8 *concat_at = result.begin;
+    MemCopy(concat_at, joiner->prefix.begin, joiner->prefix.length);
+    concat_at += joiner->prefix.length;
+    for (Str8ListNode *curr = list->first; curr != 0; curr = curr->next) {
+        MemCopy(concat_at, curr->str.begin, curr->str.length);
+        concat_at += curr->str.length;
+
+        if (curr->next != 0) {
+            MemCopy(concat_at, joiner->separator.begin, joiner->separator.length);
+            concat_at += joiner->separator.length;
+        }
+    }
+    MemCopy(concat_at, joiner->postfix.begin, joiner->postfix.length);
+    concat_at += joiner->postfix.length;
+    *concat_at = '\0';
+
     return result;
 }
 
-internal B32 char_is_lower(U8 c) {
+/* Char helpers */
+internal B32 char_is_whitespace(U8 c) {
+    B32 result = (c == ' ' || c == '\r' || c == '\n'
+        || c == '\t' || c == '\v' || c == '\f');
+    return result;
+}
+
+internal B32 ascii_char_is_lower(U8 c) {
     B32 result = (c >= 'a' && c <= 'z');
     return result;
 }
 
-internal B32 char_is_upper(U8 c) {
+internal B32 ascii_char_is_upper(U8 c) {
     B32 result = (c >= 'A' && c <= 'Z');
     return result;
 }
 
-internal B32 char_is_alpha(U8 c) {
-    B32 result = (char_is_lower(c) || char_is_upper(c));
+internal B32 ascii_char_is_alpha(U8 c) {
+    B32 result = (ascii_char_is_lower(c) || ascii_char_is_upper(c));
     return result;
 }
 
 internal B32 char_is_digit(U8 c) {
-    B32 result = false;
+    B32 result = (c >= '0' && c <= '9');
     return result;
 }
 

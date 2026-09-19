@@ -35,7 +35,7 @@ internal void test_arena(void) {
     Assert(arena->reserved == MiB(64));
     Assert(arena->committed == KiB(64));
 
-    Foo *foo = mem_arena_push_struct(arena, Foo);
+    Foo *foo = mem_arena_push_array(arena, Foo, 1);
 
     EvalPrint(foo->bar);
     EvalPrint(arena->pos);
@@ -67,11 +67,11 @@ internal void test_common(void) {
     Assert(AlignUpPow2(23, 16) == 32);
 
     MemoryArena *arena = mem_arena_default();
-    Foo *foo1 = mem_arena_push_struct(arena, Foo);
+    Foo *foo1 = mem_arena_push_array(arena, Foo, 1);
     foo1->bar = 69;
     foo1->baz = 420;
 
-    Foo *foo2 = mem_arena_push_struct(arena, Foo);
+    Foo *foo2 = mem_arena_push_array(arena, Foo, 1);
     MemCopyStruct(foo2, foo1);
     Assert(MemEqualsStruct(foo1, foo2));
 

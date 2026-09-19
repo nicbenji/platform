@@ -27,6 +27,7 @@ typedef struct {
     Str8ListNode *first;
     Str8ListNode *last;
     U64 node_count;
+    U64 total_length;
 } Str8List;
 
 
@@ -73,7 +74,14 @@ internal U32 utf16_encode(U16 *dst, U32 codepoint);
 
 
 /* Str8List ops */
+typedef struct {
+    Str8 prefix;
+    Str8 separator;
+    Str8 postfix;
+} StringJoiner;
+
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str);
+internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *optional_args);
 
 
 /* Char helpers */
