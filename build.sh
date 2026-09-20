@@ -19,7 +19,7 @@ fi
 cd $BUILD_PATH
 
 clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS \
-    "$ROOT/src/metagen.c" \
+    "$ROOT/src/metagen/metagen.c" \
     -o metagen
 ./metagen
 

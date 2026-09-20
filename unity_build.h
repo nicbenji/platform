@@ -2,6 +2,7 @@
 #define UNITY_BUILD_H
 
 #include "src/base/base_inc.h"
+#include "src/metagen/metagen_inc.h"
 
 #if OS_LINUX
 #  include "src/linux/linux_inc.h"

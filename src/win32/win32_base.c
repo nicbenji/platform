@@ -40,12 +40,20 @@ internal FileHandle file_open(Str8 file_path, FileAccessFlags flags) {
     DWORD creation_disposition = 0;
     if (flags & FileAccessFlag_Read) {
         desired_access |= GENERIC_READ;
+        creation_disposition = OPEN_EXISTING;
     }
     if (flags & FileAccessFlag_Write) {
         desired_access |= GENERIC_WRITE;
+        creation_disposition = OPEN_ALWAYS;
     }
-    // TODO: API decision -> default write behavior is append/replace???
-    creation_disposition = OPEN_ALWAYS;
+
+    if (flags & FileAccessFlag_Append) {
+        if (!(flags & FileAccessFlag_Write)) return result;
+        desired_access |= FILE_APPEND_DATA;
+    }
+    if (flags & FileAccessFlag_Truncate) {
+        creation_disposition = CREATE_ALWAYS;
+    }
 
     HANDLE file_handle = CreateFileW(
         (const WCHAR *)file_path16.begin,

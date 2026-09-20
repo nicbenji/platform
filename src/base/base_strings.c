@@ -1,6 +1,5 @@
 /* Constructors */
 
-#include "base_common.h"
 internal Str8 str8(U8 *begin, U64 length) {
     Str8 result = { begin, length };
     return result;
@@ -73,6 +72,28 @@ internal Str8List str8_split(
         }
     }
 
+    return result;
+}
+
+internal Str8 str8_chop_left(Str8 str, U64 amount) {
+    U64 clamped_amount = ClampTop(str.length, amount);
+    Str8 result = str8(str.begin + clamped_amount, str.length - clamped_amount);
+    return result;
+}
+
+internal Str8 str8_to_lower(MemoryArena *arena, Str8 str) {
+    Str8 result = str8_copy(arena, str);
+    for (U64 i = 0; i < str.length; ++i) {
+        result.begin[i] = char_ascii_to_lower(str.begin[i]);
+    }
+    return result;
+}
+
+internal Str8 str8_to_upper(MemoryArena *arena, Str8 str) {
+    Str8 result = str8_copy(arena, str);
+    for (U64 i = 0; i < str.length; ++i) {
+        result.begin[i] = char_ascii_to_upper(str.begin[i]);
+    }
     return result;
 }
 
@@ -261,7 +282,11 @@ internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 s
     return new;
 }
 
-internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *joiner) {
+internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *optional_args) {
+    StringJoiner joiner = {0};
+    if (optional_args != 0) {
+        MemCopyStruct(&joiner, optional_args);
+    }
     U64 separator_count = 0;
     if (list->node_count > 0) {
         separator_count = list->node_count - 1;
@@ -269,25 +294,25 @@ internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *j
 
     Str8 result;
     result.length = list->total_length
-        + joiner->prefix.length
-        + joiner->postfix.length
-        + (separator_count * joiner->separator.length);
+        + joiner.prefix.length
+        + joiner.postfix.length
+        + (separator_count * joiner.separator.length);
     result.begin = mem_arena_push_array(arena, U8, result.length + 1);
 
     U8 *concat_at = result.begin;
-    MemCopy(concat_at, joiner->prefix.begin, joiner->prefix.length);
-    concat_at += joiner->prefix.length;
+    MemCopy(concat_at, joiner.prefix.begin, joiner.prefix.length);
+    concat_at += joiner.prefix.length;
     for (Str8ListNode *curr = list->first; curr != 0; curr = curr->next) {
         MemCopy(concat_at, curr->str.begin, curr->str.length);
         concat_at += curr->str.length;
 
         if (curr->next != 0) {
-            MemCopy(concat_at, joiner->separator.begin, joiner->separator.length);
-            concat_at += joiner->separator.length;
+            MemCopy(concat_at, joiner.separator.begin, joiner.separator.length);
+            concat_at += joiner.separator.length;
         }
     }
-    MemCopy(concat_at, joiner->postfix.begin, joiner->postfix.length);
-    concat_at += joiner->postfix.length;
+    MemCopy(concat_at, joiner.postfix.begin, joiner.postfix.length);
+    concat_at += joiner.postfix.length;
     *concat_at = '\0';
 
     return result;
@@ -300,18 +325,18 @@ internal B32 char_is_whitespace(U8 c) {
     return result;
 }
 
-internal B32 ascii_char_is_lower(U8 c) {
+internal B32 char_ascii_is_lower(U8 c) {
     B32 result = (c >= 'a' && c <= 'z');
     return result;
 }
 
-internal B32 ascii_char_is_upper(U8 c) {
+internal B32 char_ascii_is_upper(U8 c) {
     B32 result = (c >= 'A' && c <= 'Z');
     return result;
 }
 
-internal B32 ascii_char_is_alpha(U8 c) {
-    B32 result = (ascii_char_is_lower(c) || ascii_char_is_upper(c));
+internal B32 char_ascii_is_alpha(U8 c) {
+    B32 result = (char_ascii_is_upper(c) || char_ascii_is_lower(c));
     return result;
 }
 
@@ -319,4 +344,20 @@ internal B32 char_is_digit(U8 c) {
     B32 result = (c >= '0' && c <= '9');
     return result;
 }
+
+internal U8 char_ascii_to_lower(U8 c) {
+    if (char_ascii_is_upper(c)) {
+        c += ('a' - 'A');
+    }
+    return c;
+}
+
+internal U8 char_ascii_to_upper(U8 c) {
+    if (char_ascii_is_lower(c)) {
+        c += ('A' - 'a');
+    }
+    return c;
+}
+
+
 

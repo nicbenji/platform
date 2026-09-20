@@ -2,7 +2,6 @@
 // TODO: asan
 // TODO: scratch arena
 
-#include "base_arena.h"
 internal MemoryArena *mem_arena(U64 reserve_size, U64 commit_size) {
     Assert(reserve_size >= commit_size);
 

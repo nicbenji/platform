@@ -9,8 +9,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-#include "linux_inc.h"
-#include "linux_inc.c"
 
 /* System props */
 
@@ -52,18 +50,27 @@ internal FileHandle file_open(Str8 file_path, FileAccessFlags flags) {
 
     if ((flags & FileAccessFlag_Read) && (flags & FileAccessFlag_Write)) {
         open_flags = O_RDWR;
+        open_flags |= O_CREAT;
     } else if (flags & FileAccessFlag_Read) {
         open_flags = O_RDONLY;
     } else if (flags & FileAccessFlag_Write) {
         open_flags = O_WRONLY;
+        open_flags |= O_CREAT;
     }
 
+    if (flags & FileAccessFlag_Append) {
+        open_flags |= O_APPEND;
+    }
+    if (flags & FileAccessFlag_Truncate) {
+        open_flags |= O_TRUNC;
+    }
     open_flags |= O_CLOEXEC;
 
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str8 path_copy = str8_copy(scratch.arena, file_path);
 
-    int fd = open((const char *)path_copy.begin, open_flags);
+    // TODO: correct file permissions
+    int fd = open((const char *)path_copy.begin, open_flags, 0744);
     if (fd != -1) {
         result.u64[0] = (U64)fd;
     }
@@ -109,6 +116,29 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
     return bytes_read;
 }
 
+internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
+    Assert(end >= start);
+    int fd = (int)file.u64[0];
+
+    U64 bytes_written = 0;
+    U64 left_to_write = end - start;
+    while (bytes_written < left_to_write) {
+        S64 write_result = pwrite(
+            fd, (U8 *)buffer + bytes_written,
+            left_to_write, s64_safe_cast(start + bytes_written)
+        );
+
+        if (write_result >= 0) {
+            bytes_written += (U64)write_result;
+            left_to_write -= (U64)write_result;
+        } else {
+            // TODO: Error handling + filter out e.g. EINTR??
+            break;
+        }
+    }
+    return bytes_written;
+}
+
 /* Dynamic libs */
 
 internal LibraryHandle dynlib_load(Str8 lib_path) {
@@ -151,11 +181,11 @@ int main(int argc, char **argv) {
         LibraryHandle wl_client_lib 
             = dynlib_load(str8_lit("libwayland-client.so.0"));
 
-        Wl_Functions wl;
-        if (!wl_load_functions(wl_client_lib, &wl)) {
-            // TODO: diagnostic + error msg
-            return 420;
-        }
+        // Wl_Functions wl;
+        // if (!wl_load_functions(wl_client_lib, &wl)) {
+        //     // TODO: diagnostic + error msg
+        //     return 420;
+        // }
 
     } else if (strcmp(window_manager, "x11") == 0) {
 

@@ -45,7 +45,6 @@ typedef struct {
 
 // NOTE: probs reusable across platforms -> nice abstraction might be possible
 internal void glfw_bind_gl_funcs(Gl_Funcs *gl) {
-    // FIXME: put this into some kind of metaprogram?
     gl->GenBuffers = (Gl_GenBuffersFn *)glfwGetProcAddress("glGenBuffers");
     gl->BindBuffer = (Gl_BindBufferFn *)glfwGetProcAddress("glBindBuffer");
     gl->BufferData = (Gl_BufferDataFn *)glfwGetProcAddress("glBufferData");

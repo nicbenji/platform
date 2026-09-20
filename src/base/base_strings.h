@@ -48,6 +48,12 @@ internal B32 str8_equals(Str8 a, Str8 b);
 
 internal Str8List str8_split(MemoryArena *arena, Str8 str, U8* split_chars, U64 split_char_count);
 
+internal Str8 str8_chop_left(Str8 str, U64 amount);
+
+internal Str8 str8_ascii_to_lower(MemoryArena *arena, Str8 str);
+internal Str8 str8_ascii_to_upper(MemoryArena *arena, Str8 str);
+
+
 
 /* Conversions */
 internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str);
@@ -86,10 +92,12 @@ internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *o
 
 /* Char helpers */
 internal B32 char_is_whitespace(U8 c);
-internal B32 char_is_lower(U8 c);
-internal B32 char_is_upper(U8 c);
-internal B32 char_is_alpha(U8 c);
+internal B32 char_ascii_is_lower(U8 c);
+internal B32 char_ascii_is_upper(U8 c);
+internal B32 char_ascii_is_alpha(U8 c);
 internal B32 char_is_digit(U8 c);
+internal U8 char_ascii_to_lower(U8 c);
+internal U8 char_ascii_to_upper(U8 c);
 
 
 #endif  // BASE_STRINGS_H_
