@@ -37,7 +37,8 @@ internal Str8 str8_from_cstr(const char *cstr);
 internal Str8 str8_from_range(U8 *begin, U8 *one_past_last);
 internal Str16 str16(U16 *wstr, U64 length);
 
-#define str8_lit(cstr_lit) (Str8){ (U8 *)cstr_lit, sizeof(cstr_lit) - 1 }
+#define str8_lit(cstr_lit) str8((U8 *)cstr_lit, sizeof(cstr_lit) - 1)
+#define Str8Lit(cstr_lit) { (U8 *)cstr_lit, sizeof(cstr_lit) - 1 }
 
 
 /* Helpers and basic ops */

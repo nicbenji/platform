@@ -11,7 +11,7 @@ IF NOT EXIST %buildPath% mkdir %buildPath%
 pushd %buildPath%
 
 REM 64-bit build
-cl %compilerFlags% %warnings% %buildFlags% -Fmmetagen.map "../src/metagen.c" -link %linkerFlags%
+cl %compilerFlags% %warnings% %buildFlags% -Fmmetagen.map "../src/metagen/metagen.c" -link %linkerFlags%
 .\metagen.exe
 
 cl %compilerFlags% %warnings% %buildFlags% -Fmtest_app.map "../src/test_app.c" -link %linkerFlags%

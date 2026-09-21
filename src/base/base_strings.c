@@ -347,14 +347,14 @@ internal B32 char_is_digit(U8 c) {
 
 internal U8 char_ascii_to_lower(U8 c) {
     if (char_ascii_is_upper(c)) {
-        c += ('a' - 'A');
+        c += (U8)('a' - 'A');
     }
     return c;
 }
 
 internal U8 char_ascii_to_upper(U8 c) {
     if (char_ascii_is_lower(c)) {
-        c += ('A' - 'a');
+        c += (U8)('A' - 'a');
     }
     return c;
 }

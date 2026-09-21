@@ -2,8 +2,8 @@ global_var Str8 keywords[] = {
     // str8_lit("void"),
     // str8_lit("int"),
     // str8_lit("char"),
-    str8_lit("struct"),
-    str8_lit("const")
+    Str8Lit("struct"),
+    Str8Lit("const")
 };
 
 internal B32 clex_is_keyword(Str8 identifier) {

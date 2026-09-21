@@ -94,8 +94,8 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
         U32 read_amount = (U32)Min(U32_MAX, end - offset);
         DWORD read_result;
         OVERLAPPED overlapped = {
-            .Offset = (U32)offset,
-            .OffsetHigh = (U32)(offset >> 32)
+            .Offset = (offset & Bitmask(32)),
+            .OffsetHigh = (offset & ~Bitmask(32)) >> 32
         };
 
         if (
@@ -110,6 +110,30 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
     }
     U64 bytes_read = offset - start;
     return bytes_read;
+}
+
+internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
+    Assert(end >= start);
+    HANDLE file_handle = (HANDLE)file.u64[0];
+
+    U64 offset = start;
+    U8 *write_at = buffer;
+
+    while (offset != end) {
+        U32 write_amount = (U32)Min(U32_MAX, end - offset);
+        DWORD write_result;
+        OVERLAPPED overlapped = {
+            .Offset = (offset & Bitmask(32)),
+            .OffsetHigh = (offset & ~Bitmask(32)) >> 32
+        };
+        if (!WriteFile(file_handle, write_at, write_amount, &write_result, &overlapped)) {
+            break;
+        }
+        offset += write_result;
+        write_at += write_result;
+    }
+    U64 bytes_written = offset - start;
+    return bytes_written;
 }
 
 /* Dynamic libs */
