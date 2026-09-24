@@ -1,5 +1,5 @@
-#if !defined(WL_CLIENT_LOADER_H_)
-#define WL_CLIENT_LOADER_H_
+#if !defined(WL_LOADER_H_)
+#define WL_LOADER_H_
 
 #define WL_DISPLAY_CONNECT(name) struct wl_display * name(const char * name)
 typedef WL_DISPLAY_CONNECT(wl_display_connectFn);
@@ -24,6 +24,6 @@ typedef struct {
     wl_compositor_create_surfaceFn *compositor_create_surface;
 } Wl_Functions;
 
-internal B32 wl_load_functions(LibraryHandle wl_client_lib, Wl_Functions *wl);
+internal B32 wl_load_functions(LibraryHandle wl_lib, Wl_Functions *wl);
 
-#endif // WL_CLIENT_LOADER_H_
+#endif // WL_LOADER_H_

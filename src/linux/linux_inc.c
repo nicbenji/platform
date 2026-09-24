@@ -1,1 +1,1 @@
-#include "generated/wl_client_loader.c"
+#include "generated/wl_loader.c"

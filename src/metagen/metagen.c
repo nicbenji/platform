@@ -16,7 +16,7 @@ internal Str8 mgen_format_type(MemoryArena *arena, C_Type *type) {
     if (type->is_ptr) {
         str8_list_push(arena, &list, str8_lit(" *"));
     }
-    Str8 result = str8_list_join(arena, &list, 0);
+    Str8 result = str8_list_join(arena, list, 0);
     return result;
 }
 
@@ -40,19 +40,93 @@ internal Str8 mgen_trim_proc_prefix(Str8 proc_name) {
     return result;
 }
 
+// TODO: handle possible write errors here? or return false if error??
+internal void mgen_function_loader(
+    Str8 file_dir, Str8 lib_prefix,
+    C_ProcDeclaration **procs, U64 proc_count
+) {
+    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+
+    Str8 procs_h_file = str8_lit("../src/linux/generated/wl_loader.h");
+    Str8 procs_c_file = str8_lit("../src/linux/generated/wl_loader.c");
+
+    file_replace_all(procs_h_file, (Str8List){0}); // TODO: better API for this?
+    file_replace_all(procs_c_file, (Str8List){0});
+    file_append(procs_h_file, str8_lit("#if !defined(WL_LOADER_H_)\n"
+                                       "#define WL_LOADER_H_\n\n"));
+
+    Str8 loader_decl = str8_lit("internal B32 wl_load_functions("
+                                "LibraryHandle wl_lib, Wl_Functions *wl)");
+    file_append(procs_c_file, loader_decl);
+    file_append(procs_c_file, str8_lit("{\n"));
+
+    for (U64 i = 0; i < proc_count; ++i) {
+        Str8 macro_name = str8_to_upper(scratch.arena, procs[i]->name);
+        file_append(procs_h_file, str8_lit("#define "));
+        file_append(procs_h_file, macro_name);
+        file_append(procs_h_file, str8_lit("(name) "));
+        file_append(procs_h_file, mgen_format_type(scratch.arena, procs[i]->return_type));
+        file_append(procs_h_file, str8_lit(" name("));
+        for (U64 j = 0; j < procs[i]->params->count; ++j) {
+            file_append(procs_h_file, mgen_format_type(scratch.arena, procs[i]->params->p[j]->type));
+            file_append(procs_h_file, str8_lit(" "));
+            file_append(procs_h_file, procs[i]->params->p[j]->name);
+            if (j != (procs[i]->params->count - 1)) {
+                file_append(procs_h_file, str8_lit(", "));
+            }
+        }
+        file_append(procs_h_file, str8_lit(")\n"));
+
+        Str8 proc_type = mgen_proc_name_to_type(scratch.arena, procs[i]->name);
+        file_append(procs_h_file, str8_lit("typedef "));
+        file_append(procs_h_file, macro_name);
+        file_append(procs_h_file, str8_lit("("));
+        file_append(procs_h_file, proc_type);
+        file_append(procs_h_file, str8_lit(");\n\n"));
+
+        Str8 proc_name_no_prefix = mgen_trim_proc_prefix(procs[i]->name);
+        file_append(procs_c_file, str8_lit("    wl->"));
+        file_append(procs_c_file, proc_name_no_prefix);
+        file_append(procs_c_file, str8_lit(" = ("));
+        file_append(procs_c_file, proc_type);
+        file_append(procs_c_file, str8_lit(" *)\n        dynlib_load_proc(wl_lib, str8_lit(\""));
+        file_append(procs_c_file, procs[i]->name);
+        file_append(procs_c_file, str8_lit("\"));\n    if(!wl->"));
+        file_append(procs_c_file, proc_name_no_prefix);
+        file_append(procs_c_file, str8_lit(") {\n        return false;\n    }\n\n"));
+    }
+
+    file_append(procs_h_file, str8_lit("typedef struct {\n"));
+
+    for (U64 i = 0; i < proc_count; ++i) {
+        file_append(procs_h_file, str8_lit("    "));
+        Str8 proc_type = mgen_proc_name_to_type(scratch.arena, procs[i]->name);
+        file_append(procs_h_file, proc_type);
+        file_append(procs_h_file, str8_lit(" *"));
+        file_append(procs_h_file, mgen_trim_proc_prefix(procs[i]->name));
+        file_append(procs_h_file, str8_lit(";\n"));
+    }
+
+    file_append(procs_c_file, str8_lit("    return true;\n}"));
+
+    file_append(procs_h_file, str8_lit("} Wl_Functions;\n\n"));
+    file_append(procs_h_file, loader_decl);
+    file_append(procs_h_file, str8_lit(";\n\n"));
+
+    Str8 h_guard_footer = str8_lit("#endif // WL_LOADER_H_");
+    file_append(procs_h_file, h_guard_footer);
+
+    thread_ctx_scratch_end(scratch);
+}
+
+
 internal int main_entrypoint(int argc, Str8 *argv) {
+
+#if OS_LINUX
     MemoryArena *mgen_arena = mem_arena_default();
-    Str8 in_file_funcs = file_read_all(mgen_arena, str8_lit("wl_client.signatures"));
+    Str8 in_file_funcs = file_read_all(mgen_arena, str8_lit("wl.signatures"));
     Assert(in_file_funcs.length > 0);
 
-    // prototype := return_type proc_name '(' parameters ')' ';'
-    // parameters := parameter {', ' parameter} | empty | 'void'
-    // parameter := type identifier
-    // type := base_type { '*' } ;
-    // base_type := 'struct' identifier | identifier ;
-    // proc_name := identifier
-
-    // TODO: how should this api allocate?
     C_TokenArray tokens = clex(in_file_funcs);
     if (tokens.count == 0) {
         return 0;
@@ -67,80 +141,12 @@ internal int main_entrypoint(int argc, Str8 *argv) {
         procs[proc_count++] = decl;
     }
 
-    Str8List proc_bindings_h = {0};
-    Str8List proc_bindings_c = {0};
+    mgen_function_loader(
+        str8_lit("../src/linux/generated"), str8_lit("wl"),
+        procs, proc_count
+    );
 
-    Str8 h_guard_header = str8_lit("#if !defined(WL_CLIENT_LOADER_H_)\n"
-                                   "#define WL_CLIENT_LOADER_H_\n\n");
-    str8_list_push(mgen_arena, &proc_bindings_h, h_guard_header);
-
-    Str8 loader_decl
-        = str8_lit("internal B32 wl_load_functions(LibraryHandle wl_client_lib, Wl_Functions *wl)");
-    str8_list_push(mgen_arena, &proc_bindings_c, loader_decl);
-    str8_list_push(mgen_arena, &proc_bindings_c, str8_lit("{\n"));
-
-    for (U64 i = 0; i < proc_count; ++i) {
-        Str8 macro_name = str8_to_upper(mgen_arena, procs[i]->name);
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("#define "));
-        str8_list_push(mgen_arena, &proc_bindings_h, macro_name);
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("(name) "));
-        str8_list_push(mgen_arena, &proc_bindings_h, mgen_format_type(mgen_arena, procs[i]->return_type));
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(" name("));
-        for (U64 j = 0; j < procs[i]->params->count; ++j) {
-            str8_list_push(mgen_arena, &proc_bindings_h, mgen_format_type(mgen_arena, procs[i]->params->p[j]->type));
-            str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(" "));
-            str8_list_push(mgen_arena, &proc_bindings_h, procs[i]->params->p[j]->name);
-            if (j != (procs[i]->params->count - 1)) {
-                str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(", "));
-            }
-        }
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(")\n"));
-
-        Str8 proc_type = mgen_proc_name_to_type(mgen_arena, procs[i]->name);
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("typedef "));
-        str8_list_push(mgen_arena, &proc_bindings_h, macro_name);
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("("));
-        str8_list_push(mgen_arena, &proc_bindings_h, proc_type);
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(");\n\n"));
-
-        Str8 proc_name_no_prefix = mgen_trim_proc_prefix(procs[i]->name);
-        str8_list_push(mgen_arena, &proc_bindings_c, str8_lit("    wl->"));
-        str8_list_push(mgen_arena, &proc_bindings_c, proc_name_no_prefix);
-        str8_list_push(mgen_arena, &proc_bindings_c, str8_lit(" = ("));
-        str8_list_push(mgen_arena, &proc_bindings_c, proc_type);
-        str8_list_push(mgen_arena, &proc_bindings_c, str8_lit(" *)\n        dynlib_load_proc(wl_client_lib, str8_lit(\""));
-        str8_list_push(mgen_arena, &proc_bindings_c, procs[i]->name);
-        str8_list_push(mgen_arena, &proc_bindings_c, str8_lit("\"));\n    if(!wl->"));
-        str8_list_push(mgen_arena, &proc_bindings_c, proc_name_no_prefix);
-        str8_list_push(mgen_arena, &proc_bindings_c, str8_lit(") {\n        return false;\n    }\n\n"));
-    }
-
-
-    str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("typedef struct {\n"));
-
-    for (U64 i = 0; i < proc_count; ++i) {
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("    "));
-        Str8 proc_type = mgen_proc_name_to_type(mgen_arena, procs[i]->name);
-        str8_list_push(mgen_arena, &proc_bindings_h, proc_type);
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(" *"));
-        str8_list_push(mgen_arena, &proc_bindings_h, mgen_trim_proc_prefix(procs[i]->name));
-        str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(";\n"));
-    }
-
-    str8_list_push(mgen_arena, &proc_bindings_c, str8_lit("    return true;\n}"));
-
-    str8_list_push(mgen_arena, &proc_bindings_h, str8_lit("} Wl_Functions;\n\n"));
-    str8_list_push(mgen_arena, &proc_bindings_h, loader_decl);
-    str8_list_push(mgen_arena, &proc_bindings_h, str8_lit(";\n\n"));
-
-    Str8 h_guard_footer = str8_lit("#endif // WL_CLIENT_LOADER_H_");
-    str8_list_push(mgen_arena, &proc_bindings_h, h_guard_footer);
-
-    B32 h_success
-        = file_replace_all(str8_lit("../src/linux/generated/wl_client_loader.h"), &proc_bindings_h);
-    B32 c_success
-        = file_replace_all(str8_lit("../src/linux/generated/wl_client_loader.c"), &proc_bindings_c);
-    Assert(h_success && c_success);
+#endif
 
     return 0;
 }

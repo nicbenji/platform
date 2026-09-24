@@ -88,7 +88,7 @@ typedef struct {
 } StringJoiner;
 
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str);
-internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *optional_args);
+internal Str8 str8_list_join(MemoryArena *arena, Str8List list, StringJoiner *optional_args);
 
 
 /* Char helpers */

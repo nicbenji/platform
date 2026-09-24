@@ -1,6 +1,7 @@
 #define _FILE_OFFSET_BITS 64
 
 #include <stdlib.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/mman.h>
 
@@ -107,9 +108,8 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
         if (read_result > 0) {
             bytes_read += (U64)read_result;
             left_to_read -= (U64)read_result;
-        } else {
+        } else if (errno != EINTR) {
             // TODO: EOF == 0 vs. diagnostic + error handling <0
-            // e.g. EINTR??
             break;
         }
     }
@@ -131,8 +131,8 @@ internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
         if (write_result >= 0) {
             bytes_written += (U64)write_result;
             left_to_write -= (U64)write_result;
-        } else {
-            // TODO: Error handling + filter out e.g. EINTR??
+        } else if (errno != EINTR) {
+            // TODO: Error handling
             break;
         }
     }

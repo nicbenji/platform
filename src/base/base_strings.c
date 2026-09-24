@@ -282,18 +282,18 @@ internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 s
     return new;
 }
 
-internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *optional_args) {
+internal Str8 str8_list_join(MemoryArena *arena, Str8List list, StringJoiner *optional_args) {
     StringJoiner joiner = {0};
     if (optional_args != 0) {
         MemCopyStruct(&joiner, optional_args);
     }
     U64 separator_count = 0;
-    if (list->node_count > 0) {
-        separator_count = list->node_count - 1;
+    if (list.node_count > 0) {
+        separator_count = list.node_count - 1;
     }
 
     Str8 result;
-    result.length = list->total_length
+    result.length = list.total_length
         + joiner.prefix.length
         + joiner.postfix.length
         + (separator_count * joiner.separator.length);
@@ -302,7 +302,7 @@ internal Str8 str8_list_join(MemoryArena *arena, Str8List *list, StringJoiner *o
     U8 *concat_at = result.begin;
     MemCopy(concat_at, joiner.prefix.begin, joiner.prefix.length);
     concat_at += joiner.prefix.length;
-    for (Str8ListNode *curr = list->first; curr != 0; curr = curr->next) {
+    for (Str8ListNode *curr = list.first; curr != 0; curr = curr->next) {
         MemCopy(concat_at, curr->str.begin, curr->str.length);
         concat_at += curr->str.length;
 

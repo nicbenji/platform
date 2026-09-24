@@ -8,12 +8,14 @@ typedef enum {
     FileAccessFlag_Write = (1<<1),
     FileAccessFlag_Truncate = (1<<2),
     FileAccessFlag_Append = (1<<3),
+    FileAccessFlag_MakeDirs = (1<<4),
 } FileAccessFlags;
 
 // NOTE: This api is experimental and subject to huge changes as more use cases pop up
 
 internal Str8 file_read_all(MemoryArena *arena, Str8 file_path);
-internal B32 file_replace_all(Str8 file_path, Str8List *string_list);
+internal B32 file_replace_all(Str8 file_path, Str8List string_list);
+internal B32 file_append(Str8 file_path, Str8 str);
 
 internal FileHandle file_zero(void);
 internal B32 file_valid(FileHandle file);

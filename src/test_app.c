@@ -106,7 +106,6 @@ internal void test_strings(void) {
 }
 
 internal void test_unicode(MemoryArena *arena) {
-
 }
 
 internal int main_entrypoint(int argc, Str8 *argv) {
