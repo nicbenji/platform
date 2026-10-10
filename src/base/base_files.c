@@ -1,6 +1,6 @@
 internal Str8 file_read_all(MemoryArena *arena, Str8 file_path) {
     Str8 result = {0};
-    FileHandle file = file_open(file_path, FileAccessFlag_Read);
+    FileHandle file = file_open(file_path, FileFlag_Read);
 
     if (!file_valid(file)) {
         return result;
@@ -21,17 +21,20 @@ internal Str8 file_read_all(MemoryArena *arena, Str8 file_path) {
     return result;
 }
 
+// TODO: maybe provide separate versions for write funcs if necessary
+// -> one with FileFlag_MakeDirs applied other w/o
+
 // TODO: what to do when node_count == 0
 internal B32 file_replace_all(Str8 file_path, Str8List string_list) {
     B32 result = false;
 
     FileHandle file = file_open(file_path,
-        FileAccessFlag_Write|FileAccessFlag_Truncate|FileAccessFlag_MakeDirs);
+        FileFlag_Write|FileFlag_Truncate|FileFlag_MakeDirs);
     if (!file_valid(file)) return result;
 
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
 
-    // TODO: proper buffering
+    // TODO: proper buffering / iterating over each string instead
     Str8 to_write = str8_list_join(scratch.arena, string_list, 0);
     U64 write_result = file_write(file, 0, to_write.length, to_write.begin);
 
@@ -50,7 +53,7 @@ internal B32 file_replace_all(Str8 file_path, Str8List string_list) {
 internal B32 file_append(Str8 file_path, Str8 str) {
     B32 result = false;
     FileHandle file = file_open(file_path,
-        FileAccessFlag_Write|FileAccessFlag_Append|FileAccessFlag_MakeDirs);
+        FileFlag_Write|FileFlag_Append|FileFlag_MakeDirs);
     if (!file_valid(file)) return result;
 
     U64 file_size = file_get_size(file);

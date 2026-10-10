@@ -2,10 +2,10 @@
 
 /* System props */
 
-global_var U64 global_page_size;
+global_var U64 g_page_size;
 
 internal U64 sys_info_get_page_size(void) {
-    return global_page_size;
+    return g_page_size;
 }
 
 /* Memory */
@@ -30,7 +30,7 @@ internal void mem_free(void *ptr, U64 size) {
 
 /* Files */
 
-internal FileHandle file_open(Str8 file_path, FileAccessFlags flags) {
+internal FileHandle file_open(Str8 file_path, FileFlags flags) {
     FileHandle result = {0};
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str16 file_path16 = str16_from_str8(scratch.arena, file_path);
@@ -38,21 +38,26 @@ internal FileHandle file_open(Str8 file_path, FileAccessFlags flags) {
     DWORD desired_access = 0;
     DWORD share_mode = 0;
     DWORD creation_disposition = 0;
-    if (flags & FileAccessFlag_Read) {
+    if (flags & FileFlag_Read) {
         desired_access |= GENERIC_READ;
         creation_disposition = OPEN_EXISTING;
     }
-    if (flags & FileAccessFlag_Write) {
+    if (flags & FileFlag_Write) {
         desired_access |= GENERIC_WRITE;
         creation_disposition = OPEN_ALWAYS;
     }
 
-    if (flags & FileAccessFlag_Append) {
-        if (!(flags & FileAccessFlag_Write)) return result;
+    if (flags & FileFlag_Append) {
+        if (!(flags & FileFlag_Write)) return result;
         desired_access |= FILE_APPEND_DATA;
     }
-    if (flags & FileAccessFlag_Truncate) {
+    if (flags & FileFlag_Truncate) {
         creation_disposition = CREATE_ALWAYS;
+    }
+    if (flags & FileFlag_MakeDirs) {
+        // TODO: split file path and check for dirs
+        // TODO: for each dir check if exists if not create
+        // TODO: dir_make(Str8 path)???
     }
 
     HANDLE file_handle = CreateFileW(
@@ -90,12 +95,12 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
 
     U64 offset = start;
     U8 *read_at = buffer;
-    while (offset != end) {
+    for (; offset != end; ) {
         U32 read_amount = (U32)Min(U32_MAX, end - offset);
         DWORD read_result;
         OVERLAPPED overlapped = {
-            .Offset = (offset & Bitmask(32)),
-            .OffsetHigh = (offset & ~Bitmask(32)) >> 32
+            .Offset = (U32)offset,
+            .OffsetHigh = (U32)(offset >> 32)
         };
 
         if (
@@ -110,30 +115,6 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
     }
     U64 bytes_read = offset - start;
     return bytes_read;
-}
-
-internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
-    Assert(end >= start);
-    HANDLE file_handle = (HANDLE)file.u64[0];
-
-    U64 offset = start;
-    U8 *write_at = buffer;
-
-    while (offset != end) {
-        U32 write_amount = (U32)Min(U32_MAX, end - offset);
-        DWORD write_result;
-        OVERLAPPED overlapped = {
-            .Offset = (offset & Bitmask(32)),
-            .OffsetHigh = (offset & ~Bitmask(32)) >> 32
-        };
-        if (!WriteFile(file_handle, write_at, write_amount, &write_result, &overlapped)) {
-            break;
-        }
-        offset += write_result;
-        write_at += write_result;
-    }
-    U64 bytes_written = offset - start;
-    return bytes_written;
 }
 
 /* Dynamic libs */
@@ -210,7 +191,7 @@ internal LRESULT w32_main_window_cb(
 int w32_entrypoint(int argc, WCHAR **wargv) {
     SYSTEM_INFO sys_info;
     GetSystemInfo(&sys_info);
-    global_page_size = sys_info.dwPageSize;
+    g_page_size = sys_info.dwPageSize;
 
     MemoryArena *w32_arena = mem_arena_default();
 

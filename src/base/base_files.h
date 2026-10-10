@@ -4,12 +4,12 @@ typedef struct {
 
 // TODO: maybe add MakeDirs flag for more convenience in usage
 typedef enum {
-    FileAccessFlag_Read = (1<<0),
-    FileAccessFlag_Write = (1<<1),
-    FileAccessFlag_Truncate = (1<<2),
-    FileAccessFlag_Append = (1<<3),
-    FileAccessFlag_MakeDirs = (1<<4),
-} FileAccessFlags;
+    FileFlag_Read = (1<<0),
+    FileFlag_Write = (1<<1),
+    FileFlag_Truncate = (1<<2),
+    FileFlag_Append = (1<<3),
+    FileFlag_MakeDirs = (1<<4),
+} FileFlags;
 
 // NOTE: This api is experimental and subject to huge changes as more use cases pop up
 
@@ -21,7 +21,7 @@ internal FileHandle file_zero(void);
 internal B32 file_valid(FileHandle file);
 
 // NOTE: OS-specific impl
-internal FileHandle file_open(Str8 file_path, FileAccessFlags flags);
+internal FileHandle file_open(Str8 file_path, FileFlags flags);
 internal void file_close(FileHandle file);
 internal U64 file_get_size(FileHandle file);
 // TODO: probably more nicely chunked reads -> profiler needed

@@ -20,7 +20,7 @@ internal Str8 mgen_format_type(MemoryArena *arena, C_Type *type) {
     return result;
 }
 
-#define FN_TYPE_POSTFIX str8_lit("Fn")
+#define FN_TYPE_POSTFIX str8_lit("_fn")
 
 internal Str8 mgen_proc_name_to_type(MemoryArena *arena, Str8 proc_name) {
     // TODO: add prefix to type! -> pass as arg
@@ -41,27 +41,74 @@ internal Str8 mgen_trim_proc_prefix(Str8 proc_name) {
 }
 
 // TODO: handle possible write errors here? or return false if error??
-internal void mgen_function_loader(
-    Str8 file_dir, Str8 lib_prefix,
-    C_ProcDeclaration **procs, U64 proc_count
-) {
+internal void mgen_function_loader(Str8 file_dir, Str8 proc_defs_path) {
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
 
-    Str8 procs_h_file = str8_lit("../src/linux/generated/wl_loader.h");
-    Str8 procs_c_file = str8_lit("../src/linux/generated/wl_loader.c");
+    Str8 in_file_funcs = file_read_all(scratch.arena, proc_defs_path);
+    Assert(in_file_funcs.length > 0); // TODO: error?
+
+    C_TokenArray tokens = clex(in_file_funcs);
+    if (tokens.count == 0) {
+        return;
+    }
+
+    C_ProcDeclaration *procs[MAX_PROCS];
+    U64 proc_count = 0;
+
+    C_Parser parser = cparse_begin(scratch.arena, tokens);
+    for (; !cparse_end(&parser);) {
+        C_ProcDeclaration *decl = cparse_declaration(&parser);
+        procs[proc_count++] = decl;
+    }
+
+    U8 *one_past_last_prefix = proc_defs_path.begin + (proc_defs_path.length - 1);
+    for (; *one_past_last_prefix != '.';) {
+        --one_past_last_prefix;
+    }
+
+    Str8 lib_prefix = str8_ascii_to_upper(
+        scratch.arena,
+        str8_from_range(proc_defs_path.begin, one_past_last_prefix)
+    );
+    Str8 lower_lib_prefix = str8_ascii_to_lower(scratch.arena, lib_prefix);
+
+    Str8List file_parts = {0};
+    str8_list_push(scratch.arena, &file_parts, file_dir);
+    if (file_dir.begin[file_dir.length - 1] != '/') {
+        str8_list_push(scratch.arena, &file_parts, str8_lit("/"));
+    }
+
+    str8_list_push(scratch.arena, &file_parts, lower_lib_prefix);
+    str8_list_push(scratch.arena, &file_parts, str8_lit("_loader.h"));
+
+    Str8 procs_h_file = str8_list_join(scratch.arena, file_parts, 0);
+    Str8 procs_c_file = str8_copy(scratch.arena, procs_h_file);
+    procs_c_file.begin[procs_c_file.length - 1] = 'c';
 
     file_replace_all(procs_h_file, (Str8List){0}); // TODO: better API for this?
     file_replace_all(procs_c_file, (Str8List){0});
-    file_append(procs_h_file, str8_lit("#if !defined(WL_LOADER_H_)\n"
-                                       "#define WL_LOADER_H_\n\n"));
+    file_append(procs_h_file, str8_lit("#if !defined("));
+    file_append(procs_h_file, lib_prefix);
+    file_append(procs_h_file, str8_lit("_LOADER_H_)\n"));
+    file_append(procs_h_file, str8_lit("#define "));
+    file_append(procs_h_file, lib_prefix);
+    file_append(procs_h_file, str8_lit("_LOADER_H_\n\n"));
 
-    Str8 loader_decl = str8_lit("internal B32 wl_load_functions("
-                                "LibraryHandle wl_lib, Wl_Functions *wl)");
+    Str8List loader_decl_parts = {0};
+    str8_list_push(scratch.arena, &loader_decl_parts, str8_lit("internal B32 "));
+    str8_list_push(scratch.arena, &loader_decl_parts, lower_lib_prefix);
+    str8_list_push(scratch.arena, &loader_decl_parts,
+                   str8_lit("_load_functions(LibraryHandle lib, "));
+    str8_list_push(scratch.arena, &loader_decl_parts, lib_prefix);
+    str8_list_push(scratch.arena, &loader_decl_parts, str8_lit("_Functions *fns)"));
+
+    Str8 loader_decl = str8_list_join(scratch.arena, loader_decl_parts, 0);
+
     file_append(procs_c_file, loader_decl);
     file_append(procs_c_file, str8_lit("{\n"));
 
     for (U64 i = 0; i < proc_count; ++i) {
-        Str8 macro_name = str8_to_upper(scratch.arena, procs[i]->name);
+        Str8 macro_name = str8_ascii_to_upper(scratch.arena, procs[i]->name);
         file_append(procs_h_file, str8_lit("#define "));
         file_append(procs_h_file, macro_name);
         file_append(procs_h_file, str8_lit("(name) "));
@@ -85,13 +132,13 @@ internal void mgen_function_loader(
         file_append(procs_h_file, str8_lit(");\n\n"));
 
         Str8 proc_name_no_prefix = mgen_trim_proc_prefix(procs[i]->name);
-        file_append(procs_c_file, str8_lit("    wl->"));
+        file_append(procs_c_file, str8_lit("    fns->"));
         file_append(procs_c_file, proc_name_no_prefix);
         file_append(procs_c_file, str8_lit(" = ("));
         file_append(procs_c_file, proc_type);
-        file_append(procs_c_file, str8_lit(" *)\n        dynlib_load_proc(wl_lib, str8_lit(\""));
+        file_append(procs_c_file, str8_lit(" *)\n        dynlib_load_proc(lib, str8_lit(\""));
         file_append(procs_c_file, procs[i]->name);
-        file_append(procs_c_file, str8_lit("\"));\n    if(!wl->"));
+        file_append(procs_c_file, str8_lit("\"));\n    if(!fns->"));
         file_append(procs_c_file, proc_name_no_prefix);
         file_append(procs_c_file, str8_lit(") {\n        return false;\n    }\n\n"));
     }
@@ -109,12 +156,15 @@ internal void mgen_function_loader(
 
     file_append(procs_c_file, str8_lit("    return true;\n}"));
 
-    file_append(procs_h_file, str8_lit("} Wl_Functions;\n\n"));
+    file_append(procs_h_file, str8_lit("} "));
+    file_append(procs_h_file, lib_prefix);
+    file_append(procs_h_file, str8_lit("_Functions;\n\n"));
     file_append(procs_h_file, loader_decl);
     file_append(procs_h_file, str8_lit(";\n\n"));
 
-    Str8 h_guard_footer = str8_lit("#endif // WL_LOADER_H_");
-    file_append(procs_h_file, h_guard_footer);
+    file_append(procs_h_file, str8_lit("#endif // "));
+    file_append(procs_h_file, lib_prefix);
+    file_append(procs_h_file, str8_lit("_LOADER_H_"));
 
     thread_ctx_scratch_end(scratch);
 }
@@ -123,29 +173,10 @@ internal void mgen_function_loader(
 internal int main_entrypoint(int argc, Str8 *argv) {
 
 #if OS_LINUX
-    MemoryArena *mgen_arena = mem_arena_default();
-    Str8 in_file_funcs = file_read_all(mgen_arena, str8_lit("wl.signatures"));
-    Assert(in_file_funcs.length > 0);
-
-    C_TokenArray tokens = clex(in_file_funcs);
-    if (tokens.count == 0) {
-        return 0;
-    }
-
-    C_ProcDeclaration *procs[MAX_PROCS];
-    U64 proc_count = 0;
-
-    C_Parser parser = cparse_begin(mgen_arena, tokens);
-    while (!cparse_end(&parser)) {
-        C_ProcDeclaration *decl = cparse_declaration(&parser);
-        procs[proc_count++] = decl;
-    }
-
     mgen_function_loader(
-        str8_lit("../src/linux/generated"), str8_lit("wl"),
-        procs, proc_count
+        str8_lit("../src/linux/generated"),
+        str8_lit("wl.signatures")
     );
-
 #endif
 
     return 0;

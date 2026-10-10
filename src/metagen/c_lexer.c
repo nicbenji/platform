@@ -28,7 +28,7 @@ internal B32 clex_is_id_continuation(U8 c) {
 internal Str8 clex_get_id(Str8 str) {
     U8 *at = str.begin;
     U8 *one_past_last = at + str.length;
-    while (at < one_past_last && clex_is_id_continuation(*at)) {
+    for (; at < one_past_last && clex_is_id_continuation(*at);) {
         ++at;
     }
     Str8 result = str8_from_range(str.begin, at);
@@ -53,7 +53,7 @@ internal C_TokenArray clex(Str8 c_code) {
 
     U8 *lexer_at = c_code.begin;
     U8 *one_past_last = lexer_at + c_code.length;
-    while (lexer_at < one_past_last) {
+    for (; lexer_at < one_past_last;) {
         Str8 to_lex = str8_from_range(lexer_at, one_past_last);
         if (char_is_whitespace(*lexer_at)) {
             ++lexer_at;

@@ -1,0 +1,117 @@
+#if !BUILD_CLI
+    typedef struct {
+        struct wl_compositor *compositor;
+        struct xdg_wm_base *wm_base;
+        struct wl_shm *shared_mem_support;
+    } Wl_State;
+
+    global_var Wl_State g_wl_state;
+
+    internal void xdg_surface_configure_handler(
+        void *data, struct xdg_surface *xdg_surface, U32 serial
+    ) {
+        // TODO: this correct? what to do before this?
+        xdg_surface_ack_configure(xdg_surface, serial);
+    }
+
+    global_var const struct xdg_surface_listener g_xdg_surface_listener = {
+        .configure = xdg_surface_configure_handler,
+    };
+
+    internal void xdg_wm_base_ping_handler(
+        void *data, struct xdg_wm_base *wm_base, U32 serial
+    ) {
+        xdg_wm_base_pong(wm_base, serial);
+    }
+
+    global_var const struct xdg_wm_base_listener g_wm_base_listener = {
+        .ping = xdg_wm_base_ping_handler,
+    };
+
+    internal void wl_registry_global_handler(
+        void *data, struct wl_registry *registry,
+        U32 name, const char *interface, U32 version
+    ) {
+        if (strcmp(interface, "wl_compositor") == 0) {
+            g_wl_state.compositor
+               = wl_registry_bind(registry, name, &wl_compositor_interface, version);
+        } else if (strcmp(interface, "xdg_wm_base") == 0) {
+            g_wl_state.wm_base
+               = wl_registry_bind(registry, name, &wl_compositor_interface, version);
+            xdg_wm_base_add_listener(g_wl_state.wm_base, &g_wm_base_listener, 0);
+        } else if (strcmp(interface, "wl_shm") == 0) {
+            g_wl_state.shared_mem_support
+               = wl_registry_bind(registry, name, &wl_shm_interface, version);
+            // TODO: check rgb format support via listener or nah??
+        }
+    }
+
+    internal void wl_registry_global_remove_handler(
+        void *data, struct wl_registry *registry, U32 name
+    ) {}
+
+    global_var const struct wl_registry_listener g_registry_listener = {
+        .global = wl_registry_global_handler,
+        .global_remove = wl_registry_global_remove_handler,
+    };
+#endif
+
+#if !BUILD_CLI // TODO: temporary, probs should just build entire windowing abstraction
+    const char *window_manager = getenv("XDG_SESSION_TYPE");
+    if (strcmp(window_manager, "wayland") == 0) {
+
+        struct wl_display *display = wl_display_connect(0);
+        struct wl_registry *registry =  wl_display_get_registry(display);
+        wl_registry_add_listener(registry, &g_registry_listener, 0);
+
+        struct wl_surface *surface
+            = wl_compositor_create_surface(g_wl_state.compositor);
+        struct xdg_surface *xdg_surface
+            = xdg_wm_base_get_xdg_surface(g_wl_state.wm_base, surface);
+        xdg_surface_add_listener(xdg_surface, &g_xdg_surface_listener, 0);
+        struct xdg_toplevel *xdg_toplvl = xdg_surface_get_toplevel(xdg_surface);
+        // TODO: set proper title, maybe also app ID? + window size stuff
+        xdg_toplevel_set_title(xdg_toplvl, "Wayland Window");
+
+        int width = 1280, height = 720;
+        int stride = width * 4;
+        int shm_pool_size = height * stride * 2;
+
+        int shm_fd = shm_open("Wayland Window", O_RDWR|O_CREAT|O_EXCL, 0600);
+        if (shm_fd < 0) {
+            // TODO: error handling + diagnostic
+            return 69;
+        }
+        // TODO: call shm_unlink()???
+        ftruncate(shm_fd, shm_pool_size);
+
+        U8 *shm_pool_data
+            = mmap(0, (size_t)shm_pool_size, PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+        struct wl_shm_pool *shared_mem_pool
+            = wl_shm_create_pool(g_wl_state.shared_mem_support, shm_fd, shm_pool_size);
+
+        struct wl_buffer *buffers[2];
+        buffers[0] = wl_shm_pool_create_buffer(
+            shared_mem_pool, 0,
+            width, height, stride, WL_SHM_FORMAT_RGBA8888
+        );
+        buffers[1] = wl_shm_pool_create_buffer(
+            shared_mem_pool, height * stride,
+            width, height, stride, WL_SHM_FORMAT_RGBA8888
+        );
+
+        wl_surface_attach(surface, buffers[0], 0, 0);
+        wl_surface_commit(surface);
+
+
+    } else if (strcmp(window_manager, "x11") == 0) {
+
+
+    } else {
+        // TODO: diagnostic + error msg
+        return 69;
+    }
+#endif
+
+
+

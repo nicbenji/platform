@@ -8,7 +8,7 @@ MAIN_FILE="$ROOT/src/test_app.c"
 LIBS=""
 COMPILE_FLAGS="-DBUILD_DEBUG=1 -DWM_WAYLAND=1"
 OPTIMIZATION_FLAGS="-g3 -ggdb -O0 -fbuiltin -fno-exceptions -fno-rtti -fno-omit-frame-pointer"
-WARNINGS="-Wall -Wextra -pedantic -Wshadow -Wsign-conversion -Wundef
+WARNINGS="-Wall -Wextra -pedantic -Wshadow -Wsign-conversion -Wno-undef
     -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter"
 
 if [[ ! -d $BUILD_PATH ]]; then
@@ -16,14 +16,15 @@ if [[ ! -d $BUILD_PATH ]]; then
 fi
 cd $BUILD_PATH
 
-clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS \
+clang $COMPILE_FLAGS -DBUILD_CLI=1 $WARNINGS $OPTIMIZATION_FLAGS \
     "$ROOT/src/metagen/metagen.c" \
     -o metagen
 
 cd $ASSET_PATH
+    echo "Running metaprogram..."
     $BUILD_PATH/metagen
 cd $BUILD_PATH
 
 clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS $MAIN_FILE \
-    -lGL \
+    -lwayland-client \
     -o $PROJECT_NAME.out

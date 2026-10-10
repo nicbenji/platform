@@ -81,7 +81,7 @@ internal Str8 str8_chop_left(Str8 str, U64 amount) {
     return result;
 }
 
-internal Str8 str8_to_lower(MemoryArena *arena, Str8 str) {
+internal Str8 str8_ascii_to_lower(MemoryArena *arena, Str8 str) {
     Str8 result = str8_copy(arena, str);
     for (U64 i = 0; i < str.length; ++i) {
         result.begin[i] = char_ascii_to_lower(str.begin[i]);
@@ -89,7 +89,7 @@ internal Str8 str8_to_lower(MemoryArena *arena, Str8 str) {
     return result;
 }
 
-internal Str8 str8_to_upper(MemoryArena *arena, Str8 str) {
+internal Str8 str8_ascii_to_upper(MemoryArena *arena, Str8 str) {
     Str8 result = str8_copy(arena, str);
     for (U64 i = 0; i < str.length; ++i) {
         result.begin[i] = char_ascii_to_upper(str.begin[i]);
@@ -149,12 +149,15 @@ internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
 
 #define UTF8_CONT_BITS_AMT 6
 
+// FIXME: look at some other unicode conversion code and rework accordingly
+
 global_var U8 utf8_class[32] = {
       1,1,1,1,1,1,1,1,
       1,1,1,1,1,1,1,1,
       0,0,0,0,0,0,0,0,
       2,2,2,2,3,3,4,5,
 };
+
 
 internal UnicodeDecoder utf8_decode(U8 *str, U64 max) {
     UnicodeDecoder result = { U32_MAX, 1 };
@@ -228,7 +231,7 @@ internal UnicodeDecoder utf16_decode(U16 *str, U64 max) {
 }
 
 internal U32 utf8_encode(U8 *dst, U32 codepoint) {
-    U32 codepoint_size = UNICODE_INVALID_CODEPOINT;
+    U32 codepoint_size = UNICODE_INVALID_CP_SIZE;
 
     if (codepoint <= 0x7f) {
         dst[0] = (U8)codepoint;
@@ -255,7 +258,7 @@ internal U32 utf8_encode(U8 *dst, U32 codepoint) {
 }
 
 internal U32 utf16_encode(U16 *dst, U32 codepoint) {
-    U32 codepoint_size = UNICODE_INVALID_CODEPOINT;
+    U32 codepoint_size = UNICODE_INVALID_CP_SIZE;
 
     // TODO: should really filter out surrogates??? -> probs not
     if (codepoint <= 0xd7ff || (codepoint >= 0xe000 && codepoint < 0xffff)) {
@@ -282,8 +285,8 @@ internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 s
     return new;
 }
 
-internal Str8 str8_list_join(MemoryArena *arena, Str8List list, StringJoiner *optional_args) {
-    StringJoiner joiner = {0};
+internal Str8 str8_list_join(MemoryArena *arena, Str8List list, Str8Joiner *optional_args) {
+    Str8Joiner joiner = {0};
     if (optional_args != 0) {
         MemCopyStruct(&joiner, optional_args);
     }

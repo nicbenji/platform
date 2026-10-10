@@ -52,7 +52,7 @@ internal C_ParamArray *cparse_params(C_Parser *parser) {
         return result;
     }
 
-    while (parser->at->kind != TokenKind_CloseParen) {
+    for (; parser->at->kind != TokenKind_CloseParen;) {
         C_Param *curr_param = mem_arena_push_array(parser->arena, C_Param, 1);
 
         curr_param->type = cparse_type(parser);

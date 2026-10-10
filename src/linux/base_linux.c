@@ -1,4 +1,4 @@
-#define _FILE_OFFSET_BITS 64
+#define _FILE_OFFSET_BITS 64 // TODO: keep this or just read in <32bit batches
 
 #include <stdlib.h>
 #include <errno.h>
@@ -10,13 +10,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
-
 /* System props */
 
-global_var U64 global_page_size;
+global_var U64 g_page_size;
 
 internal U64 sys_info_get_page_size(void) {
-    return global_page_size;
+    return g_page_size;
 }
 
 /* Memory */
@@ -45,25 +44,30 @@ internal void mem_free(void *ptr, U64 size) {
 
 /* Files */
 
-internal FileHandle file_open(Str8 file_path, FileAccessFlags flags) {
+internal FileHandle file_open(Str8 file_path, FileFlags flags) {
     FileHandle result = {0};
     int open_flags = 0;
 
-    if ((flags & FileAccessFlag_Read) && (flags & FileAccessFlag_Write)) {
+    if ((flags & FileFlag_Read) && (flags & FileFlag_Write)) {
         open_flags = O_RDWR;
         open_flags |= O_CREAT;
-    } else if (flags & FileAccessFlag_Read) {
+    } else if (flags & FileFlag_Read) {
         open_flags = O_RDONLY;
-    } else if (flags & FileAccessFlag_Write) {
+    } else if (flags & FileFlag_Write) {
         open_flags = O_WRONLY;
         open_flags |= O_CREAT;
     }
 
-    if (flags & FileAccessFlag_Append) {
+    if (flags & FileFlag_Append) {
         open_flags |= O_APPEND;
     }
-    if (flags & FileAccessFlag_Truncate) {
+    if (flags & FileFlag_Truncate) {
         open_flags |= O_TRUNC;
+    }
+    if (flags & FileFlag_MakeDirs) {
+        // TODO: split file path and check for dirs
+        // TODO: for each dir check if exists if not create
+        // TODO: dir_make(Str8 path)???
     }
     open_flags |= O_CLOEXEC;
 
@@ -99,7 +103,7 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
 
     U64 bytes_read = 0;
     U64 left_to_read = end - start;
-    while (left_to_read > 0) {
+    for (; left_to_read > 0; ) {
         S64 read_result = pread(
             fd, (U8 *)buffer + bytes_read,
             left_to_read, s64_safe_cast(start + bytes_read)
@@ -122,7 +126,7 @@ internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
 
     U64 bytes_written = 0;
     U64 left_to_write = end - start;
-    while (bytes_written < left_to_write) {
+    for (; bytes_written < left_to_write;) {
         S64 write_result = pwrite(
             fd, (U8 *)buffer + bytes_written,
             left_to_write, s64_safe_cast(start + bytes_written)
@@ -163,9 +167,8 @@ internal VoidProc *dynlib_load_proc(LibraryHandle lib, Str8 proc_name) {
     return result;
 }
 
-
 int main(int argc, char **argv) {
-    global_page_size = (U64)sysconf(_SC_PAGESIZE);
+    g_page_size = (U64)sysconf(_SC_PAGESIZE);
 
     Str8 utf8_args[argc];
     for (int i = 0; i < argc; ++i) {
@@ -175,17 +178,11 @@ int main(int argc, char **argv) {
     ThreadContext *main_thread_ctx = thread_ctx();
     thread_ctx_set(main_thread_ctx);
 
+#if !BUILD_CLI // TODO: temporary, probs should just build entire windowing abstraction
     const char *window_manager = getenv("XDG_SESSION_TYPE");
     if (strcmp(window_manager, "wayland") == 0) {
 
-        LibraryHandle wl_client_lib 
-            = dynlib_load(str8_lit("libwayland-client.so.0"));
-
-        // Wl_Functions wl;
-        // if (!wl_load_functions(wl_client_lib, &wl)) {
-        //     // TODO: diagnostic + error msg
-        //     return 420;
-        // }
+        // TODO: impl wayland protocl myself for the lolz
 
     } else if (strcmp(window_manager, "x11") == 0) {
 
@@ -194,6 +191,7 @@ int main(int argc, char **argv) {
         // TODO: diagnostic + error msg
         return 69;
     }
+#endif
 
     int result = main_entrypoint(argc, utf8_args);
     return result;

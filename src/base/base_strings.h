@@ -65,7 +65,7 @@ typedef struct {
     U32 size;
 } UnicodeDecoder;
 
-#define UNICODE_INVALID_CODEPOINT 0
+#define UNICODE_INVALID_CP_SIZE 0
 
 // Decode the given U8*/U16* into a unicode codepoint if the codepoint size is
 // smaller than the specified max.
@@ -85,10 +85,10 @@ typedef struct {
     Str8 prefix;
     Str8 separator;
     Str8 postfix;
-} StringJoiner;
+} Str8Joiner;
 
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str);
-internal Str8 str8_list_join(MemoryArena *arena, Str8List list, StringJoiner *optional_args);
+internal Str8 str8_list_join(MemoryArena *arena, Str8List list, Str8Joiner *optional_args);
 
 
 /* Char helpers */
