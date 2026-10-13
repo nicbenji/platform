@@ -13,5 +13,13 @@
 #include "base_dynamic_libs.h"
 #include "base_files.h"
 
+#if OS_WINDOWS
+    #include "../win32/base_win32.h"
+#elif OS_LINUX
+    #include "../linux/base_linux.h"
+#else
+    #error Missing platform backend for this OS.
+#endif
+
 #endif  // BASE_INC_H_
 

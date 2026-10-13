@@ -1,5 +1,3 @@
-#include <windows.h>
-
 /* System props */
 
 global_var U64 g_page_size;
@@ -31,7 +29,7 @@ internal void mem_free(void *ptr, U64 size) {
 /* Files */
 
 internal FileHandle file_open(Str8 file_path, FileFlags flags) {
-    FileHandle result = {0};
+    FileHandle result = file_zero();
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str16 file_path16 = str16_from_str8(scratch.arena, file_path);
 

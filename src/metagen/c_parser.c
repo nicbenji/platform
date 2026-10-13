@@ -7,7 +7,7 @@ internal B32 cparse_expect(C_Parser *parser, C_TokenKind expected) {
 }
 
 internal Str8 cparse_id(C_Parser *parser) {
-    Str8 result = {0};
+    Str8 result = str8_zero();
     if (parser->at->kind == TokenKind_Identifier) {
         result = parser->at->str;
         ++parser->at;

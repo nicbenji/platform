@@ -4,7 +4,7 @@
 #include "metagen_inc.c"
 
 internal Str8 mgen_format_type(MemoryArena *arena, C_Type *type) {
-    Str8List list = {0};
+    Str8List list = str8_list_zero();
     if (type->is_const) {
         str8_list_push(arena, &list, str8_lit("const "));
     }
@@ -26,7 +26,7 @@ internal Str8 mgen_proc_name_to_type(MemoryArena *arena, Str8 proc_name) {
     // TODO: add prefix to type! -> pass as arg
     // TODO: capitalisation, casing
     // TODO: simple concat method? or should always go through Str8List? maybe Str8Builder???
-    Str8 result = {0};
+    Str8 result = str8_zero();
     result.length = proc_name.length + FN_TYPE_POSTFIX.length;
     result.begin = mem_arena_push_array(arena, U8, result.length);
     MemCopy(result.begin, proc_name.begin, proc_name.length);
@@ -72,7 +72,7 @@ internal void mgen_function_loader(Str8 file_dir, Str8 proc_defs_path) {
     );
     Str8 lower_lib_prefix = str8_ascii_to_lower(scratch.arena, lib_prefix);
 
-    Str8List file_parts = {0};
+    Str8List file_parts = str8_list_zero();
     str8_list_push(scratch.arena, &file_parts, file_dir);
     if (file_dir.begin[file_dir.length - 1] != '/') {
         str8_list_push(scratch.arena, &file_parts, str8_lit("/"));
@@ -85,8 +85,8 @@ internal void mgen_function_loader(Str8 file_dir, Str8 proc_defs_path) {
     Str8 procs_c_file = str8_copy(scratch.arena, procs_h_file);
     procs_c_file.begin[procs_c_file.length - 1] = 'c';
 
-    file_replace_all(procs_h_file, (Str8List){0}); // TODO: better API for this?
-    file_replace_all(procs_c_file, (Str8List){0});
+    file_replace_all(procs_h_file, str8_list_zero());
+    file_replace_all(procs_c_file, str8_list_zero());
     file_append(procs_h_file, str8_lit("#if !defined("));
     file_append(procs_h_file, lib_prefix);
     file_append(procs_h_file, str8_lit("_LOADER_H_)\n"));
@@ -94,7 +94,7 @@ internal void mgen_function_loader(Str8 file_dir, Str8 proc_defs_path) {
     file_append(procs_h_file, lib_prefix);
     file_append(procs_h_file, str8_lit("_LOADER_H_\n\n"));
 
-    Str8List loader_decl_parts = {0};
+    Str8List loader_decl_parts = str8_list_zero();
     str8_list_push(scratch.arena, &loader_decl_parts, str8_lit("internal B32 "));
     str8_list_push(scratch.arena, &loader_decl_parts, lower_lib_prefix);
     str8_list_push(scratch.arena, &loader_decl_parts,

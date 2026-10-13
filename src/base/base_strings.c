@@ -1,5 +1,10 @@
 /* Constructors */
 
+internal Str8 str8_zero(void) {
+    Str8 result = {0};
+    return result;
+}
+
 internal Str8 str8(U8 *begin, U64 length) {
     Str8 result = { begin, length };
     return result;
@@ -14,6 +19,11 @@ internal Str8 str8_from_cstr(const char *cstr) {
 internal Str8 str8_from_range(U8 *begin, U8 *one_past_last) {
     U64 length = (U64)(one_past_last - begin);
     Str8 result = str8(begin, length);
+    return result;
+}
+
+internal Str16 str16_zero(void) {
+    Str16 result = {0};
     return result;
 }
 
@@ -43,38 +53,6 @@ internal B32 str8_equals(Str8 a, Str8 b) {
     return result;
 }
 
-internal Str8List str8_split(
-    MemoryArena *arena, Str8 str,
-    U8* split_chars, U64 split_char_count
-) {
-    Str8List result = {0};
-
-    U8 *one_past_last = str.begin + str.length;
-    for (U8 *at = str.begin; at < one_past_last; ++at) {
-        U8 *first_char = at;
-        for (; at < one_past_last; ++at) {
-            B32 is_split_char = false;
-            for (U64 i = 0; i < split_char_count; ++i) {
-                if (*at == split_chars[i]) {
-                    is_split_char = true;
-                    break;
-                }
-            }
-
-            if (is_split_char) {
-                break;
-            }
-        }
-
-        Str8 split_str = str8_from_range(first_char, at);
-        if (split_str.length > 0) {
-            str8_list_push(arena, &result, split_str);
-        }
-    }
-
-    return result;
-}
-
 internal Str8 str8_chop_left(Str8 str, U64 amount) {
     U64 clamped_amount = ClampTop(str.length, amount);
     Str8 result = str8(str.begin + clamped_amount, str.length - clamped_amount);
@@ -100,7 +78,7 @@ internal Str8 str8_ascii_to_upper(MemoryArena *arena, Str8 str) {
 /* Conversion */
 
 internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str) {
-    Str8 result = {0};
+    Str8 result = str8_zero();
     if (utf16_str.length == 0) return result;
 
     U64 alloc_size = utf16_str.length * 3;
@@ -123,7 +101,7 @@ internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str) {
 }
 
 internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
-    Str16 result = {0};
+    Str16 result = str16_zero();
     if (utf8_str.length == 0) return result;
 
     U64 alloc_size = utf8_str.length * 2;
@@ -276,6 +254,11 @@ internal U32 utf16_encode(U16 *dst, U32 codepoint) {
 
 /* Str8List ops */
 
+internal Str8List str8_list_zero(void) {
+    Str8List result = {0};
+    return result;
+}
+
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str) {
     Str8ListNode *new = mem_arena_push_array(arena, Str8ListNode, 1);
     sll_queue_push_back(list->first, list->last, new);
@@ -284,6 +267,40 @@ internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 s
     new->str = str;
     return new;
 }
+
+internal Str8List str8_split(
+    MemoryArena *arena, Str8 str,
+    U8* split_chars, U64 split_char_count
+) {
+    Str8List result = str8_list_zero();
+
+    U8 *one_past_last = str.begin + str.length;
+    for (U8 *at = str.begin; at < one_past_last; ++at) {
+        U8 *first_char = at;
+        for (; at < one_past_last; ++at) {
+            B32 is_split_char = false;
+            for (U64 i = 0; i < split_char_count; ++i) {
+                if (*at == split_chars[i]) {
+                    is_split_char = true;
+                    break;
+                }
+            }
+
+            if (is_split_char) {
+                break;
+            }
+        }
+
+        Str8 split_str = str8_from_range(first_char, at);
+        if (split_str.length > 0) {
+            str8_list_push(arena, &result, split_str);
+        }
+    }
+
+    return result;
+}
+
+
 
 internal Str8 str8_list_join(MemoryArena *arena, Str8List list, Str8Joiner *optional_args) {
     Str8Joiner joiner = {0};

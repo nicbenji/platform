@@ -17,28 +17,18 @@ typedef struct {
     U64 length;
 } Str16;
 
-typedef struct Str8ListNode Str8ListNode;
-struct Str8ListNode {
-    Str8ListNode *next;
-    Str8 str;
-};
-
-typedef struct {
-    Str8ListNode *first;
-    Str8ListNode *last;
-    U64 node_count;
-    U64 total_length;
-} Str8List;
-
 
 /* Constructors */
+internal Str8 str8_zero(void);
 internal Str8 str8(U8 *begin, U64 length);
 internal Str8 str8_from_cstr(const char *cstr);
 internal Str8 str8_from_range(U8 *begin, U8 *one_past_last);
+internal Str16 str16_zero(void);
 internal Str16 str16(U16 *wstr, U64 length);
 
-#define str8_lit(cstr_lit) str8((U8 *)cstr_lit, sizeof(cstr_lit) - 1)
-#define Str8Lit(cstr_lit) { (U8 *)cstr_lit, sizeof(cstr_lit) - 1 }
+#define CStrLen(cstr_lit) (sizeof(cstr_lit) - 1)
+#define str8_lit(cstr_lit) str8((U8 *)cstr_lit, CStrLen(cstr_lit))
+#define Str8Lit(cstr_lit) { (U8 *)cstr_lit, CStrLen(cstr_lit) }
 
 
 /* Helpers and basic ops */
@@ -47,13 +37,10 @@ internal B32 str8_equals(Str8 a, Str8 b);
 
 #define str8_vargs(s) (int)((s).length), ((s).begin)
 
-internal Str8List str8_split(MemoryArena *arena, Str8 str, U8* split_chars, U64 split_char_count);
-
 internal Str8 str8_chop_left(Str8 str, U64 amount);
 
 internal Str8 str8_ascii_to_lower(MemoryArena *arena, Str8 str);
 internal Str8 str8_ascii_to_upper(MemoryArena *arena, Str8 str);
-
 
 
 /* Conversions */
@@ -80,14 +67,29 @@ internal U32 utf8_encode(U8 *dst, U32 codepoint);
 internal U32 utf16_encode(U16 *dst, U32 codepoint);
 
 
-/* Str8List ops */
+/* Str8List */
+typedef struct Str8ListNode Str8ListNode;
+struct Str8ListNode {
+    Str8ListNode *next;
+    Str8 str;
+};
+
+typedef struct {
+    Str8ListNode *first;
+    Str8ListNode *last;
+    U64 node_count;
+    U64 total_length;
+} Str8List;
+
 typedef struct {
     Str8 prefix;
     Str8 separator;
     Str8 postfix;
 } Str8Joiner;
 
+internal Str8List str8_list_zero(void);
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str);
+internal Str8List str8_split(MemoryArena *arena, Str8 str, U8* split_chars, U64 split_char_count);
 internal Str8 str8_list_join(MemoryArena *arena, Str8List list, Str8Joiner *optional_args);
 
 

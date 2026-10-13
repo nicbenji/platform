@@ -8,7 +8,7 @@ MAIN_FILE="$ROOT/src/test_app.c"
 LIBS=""
 COMPILE_FLAGS="-DBUILD_DEBUG=1 -DWM_WAYLAND=1"
 OPTIMIZATION_FLAGS="-g3 -ggdb -O0 -fbuiltin -fno-exceptions -fno-rtti -fno-omit-frame-pointer"
-WARNINGS="-Wall -Wextra -pedantic -Wshadow -Wsign-conversion -Wno-undef
+WARNINGS="-Wall -Werror=vla -Wextra -pedantic -Wshadow -Wsign-conversion -Wno-undef
     -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter"
 
 if [[ ! -d $BUILD_PATH ]]; then

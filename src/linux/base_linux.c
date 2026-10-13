@@ -1,14 +1,4 @@
-#define _FILE_OFFSET_BITS 64 // TODO: keep this or just read in <32bit batches
-
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/mman.h>
-
-#include <dlfcn.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
+#include "window_manager_wayland.c"
 
 /* System props */
 
@@ -45,7 +35,7 @@ internal void mem_free(void *ptr, U64 size) {
 /* Files */
 
 internal FileHandle file_open(Str8 file_path, FileFlags flags) {
-    FileHandle result = {0};
+    FileHandle result = file_zero();
     int open_flags = 0;
 
     if ((flags & FileFlag_Read) && (flags & FileFlag_Write)) {
@@ -170,7 +160,9 @@ internal VoidProc *dynlib_load_proc(LibraryHandle lib, Str8 proc_name) {
 int main(int argc, char **argv) {
     g_page_size = (U64)sysconf(_SC_PAGESIZE);
 
-    Str8 utf8_args[argc];
+    MemoryArena *linux_arena = mem_arena_default();
+
+    Str8 *utf8_args = mem_arena_push_array(linux_arena, Str8, (U64)argc);
     for (int i = 0; i < argc; ++i) {
         utf8_args[i] = str8_from_cstr(argv[i]);
     }
@@ -182,7 +174,10 @@ int main(int argc, char **argv) {
     const char *window_manager = getenv("XDG_SESSION_TYPE");
     if (strcmp(window_manager, "wayland") == 0) {
 
-        // TODO: impl wayland protocl myself for the lolz
+        int rc = wl_init();
+        if (rc != 0) {
+            return 420;
+        }
 
     } else if (strcmp(window_manager, "x11") == 0) {
 

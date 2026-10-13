@@ -1,5 +1,5 @@
 internal Str8 file_read_all(MemoryArena *arena, Str8 file_path) {
-    Str8 result = {0};
+    Str8 result = str8_zero();
     FileHandle file = file_open(file_path, FileFlag_Read);
 
     if (!file_valid(file)) {

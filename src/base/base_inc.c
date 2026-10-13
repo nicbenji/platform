@@ -4,10 +4,10 @@
 #include "base_strings.c"
 #include "base_files.c"
 
-#if OS_LINUX
-#  include "../linux/base_linux.c"
-#elif OS_WINDOWS
+#if OS_WINDOWS
 #  include "../win32/base_win32.c"
+#elif OS_LINUX
+#  include "../linux/base_linux.c"
 #else
-#  error Missing platform layer for this OS
+#  error Missing platform backend for this OS.
 #endif
