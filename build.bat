@@ -13,16 +13,11 @@ IF NOT EXIST %buildPath% mkdir %buildPath%
 pushd %buildPath%
 
 REM 64-bit build
-<<<<<<< Updated upstream
-cl %compilerFlags% %warnings% %buildFlags% -Fmmetagen.map "../src/metagen/metagen.c" -DBUILD_CLI=1 -link %linkerFlags%
-.\metagen.exe
-=======
 cl %compilerFlags% -DBUILD_CLI=1 %warnings% %buildFlags% -Fmmetagen.map "../src/metagen/metagen.c" -link %linkerFlags%
 
 pushd %assetPath%
-    .\metagen.exe
+    ..\build\metagen.exe
 popd
->>>>>>> Stashed changes
 
 cl %compilerFlags% %warnings% %buildFlags% -Fmtest_app.map "../src/test_app.c" -link %linkerFlags%
 popd

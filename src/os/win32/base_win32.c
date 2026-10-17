@@ -115,6 +115,30 @@ internal U64 file_read(File file, U64 start, U64 end, void *buffer) {
     return bytes_read;
 }
 
+internal U64 file_write(File file, U64 start, U64 end, void *buffer) {
+    Assert(end >= start);
+    HANDLE file_handle = (HANDLE)file.u64[0];
+
+    U64 offset = start;
+    U8 *write_at = buffer;
+
+    while (offset != end) {
+        U32 write_amount = (U32)Min(U32_MAX, end - offset);
+        DWORD write_result;
+        OVERLAPPED overlapped = {
+            .Offset = (offset & Bitmask(32)),
+            .OffsetHigh = (offset & ~Bitmask(32)) >> 32
+        };
+        if (!WriteFile(file_handle, write_at, write_amount, &write_result, &overlapped)) {
+            break;
+        }
+        offset += write_result;
+        write_at += write_result;
+    }
+    U64 bytes_written = offset - start;
+    return bytes_written;
+}
+
 /* Dynamic libs */
 
 internal Library dynlib_load(Str8 lib_path) {
@@ -148,44 +172,6 @@ internal Str8 w32_wstr_to_str8(MemoryArena *arena, WCHAR *wstr) {
     return result;
 }
 
-internal LRESULT w32_main_window_cb(
-    HWND window, UINT message_code,
-    WPARAM w_param, LPARAM l_param
-) {
-    LRESULT result = 0;
-
-    switch (message_code) {
-        case WM_SIZE: {
-        } break;
-
-        case WM_DESTROY: {
-        } break;
-
-        case WM_CLOSE: {
-        } break;
-
-        case WM_ACTIVATEAPP: {
-            if (w_param == TRUE) {
-                SetLayeredWindowAttributes(window, RGB(0,0,0), 255, LWA_ALPHA);
-            } else {
-                SetLayeredWindowAttributes(window, RGB(0,0,0), 64, LWA_ALPHA);
-            }
-        } break;
-
-        case WM_PAINT: {
-        } break;
-
-
-        default: {
-            result = DefWindowProcA(window, message_code, w_param, l_param);
-        } break;
-
-
-    }
-
-    return result;
-}
-
 int w32_entrypoint(int argc, WCHAR **wargv) {
     SYSTEM_INFO sys_info;
     GetSystemInfo(&sys_info);
@@ -201,35 +187,6 @@ int w32_entrypoint(int argc, WCHAR **wargv) {
 
     ThreadContext *main_thread_ctx = thread_ctx();
     thread_ctx_set(main_thread_ctx);
-
-#if !BUILD_CLI // TODO: factor out into platform-independent window manager api
-    HMODULE instance = GetModuleHandleW(0);
-
-    // TODO: custom window title
-    WNDCLASSW window_class = {};
-    window_class.style = CS_HREDRAW|CS_VREDRAW;
-    window_class.lpfnWndProc = w32_main_window_cb;
-    window_class.hInstance = instance;
-    window_class.lpszClassName = L"Win32_WindowClass";
-    // windowClass.hIcon;
-
-    if (!RegisterClassW(&window_class)) {
-        // TODO: error handling + diagnostic
-    }
-
-    // TODO: WS_EX_APPWINDOW??
-    HWND window_handle = CreateWindowExW(
-        WS_EX_LAYERED,
-        window_class.lpszClassName, L"Win32 Window",
-        WS_OVERLAPPEDWINDOW|WS_VISIBLE,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        0, 0, instance, 0
-    );
-
-    if (!window_handle) {
-        // TODO: error handling + diagnostic
-    }
-#endif
 
     int result = main_entrypoint(argc, utf8_args);
     return result;
