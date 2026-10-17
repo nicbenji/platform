@@ -28,8 +28,8 @@ internal void mem_free(void *ptr, U64 size) {
 
 /* Files */
 
-internal FileHandle file_open(Str8 file_path, FileFlags flags) {
-    FileHandle result = file_zero();
+internal File file_open(Str8 file_path, FileFlags flags) {
+    File result = file_zero();
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str16 file_path16 = str16_from_str8(scratch.arena, file_path);
 
@@ -72,12 +72,12 @@ internal FileHandle file_open(Str8 file_path, FileFlags flags) {
     return result;
 }
 
-internal void file_close(FileHandle file) {
+internal void file_close(File file) {
     HANDLE file_handle = (HANDLE)file.u64[0];
     CloseHandle(file_handle);
 }
 
-internal U64 file_get_size(FileHandle file) {
+internal U64 file_get_size(File file) {
     U64 result = 0;
     HANDLE file_handle = (HANDLE)file.u64[0];
     LARGE_INTEGER file_size;
@@ -87,7 +87,7 @@ internal U64 file_get_size(FileHandle file) {
     return result;
 }
 
-internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
+internal U64 file_read(File file, U64 start, U64 end, void *buffer) {
     Assert(end >= start);
     HANDLE file_handle = (HANDLE)file.u64[0];
 
@@ -117,18 +117,18 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
 
 /* Dynamic libs */
 
-internal LibraryHandle dynlib_load(Str8 lib_path) {
+internal Library dynlib_load(Str8 lib_path) {
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str16 lib_path16 = str16_from_str8(scratch.arena, lib_path);
 
     HMODULE dynlib = LoadLibraryW((const WCHAR *)lib_path16.begin);
-    LibraryHandle result = { (U64)dynlib };
+    Library result = { (U64)dynlib };
 
     thread_ctx_scratch_end(scratch);
     return result;
 }
 
-internal VoidProc *dynlib_load_proc(LibraryHandle lib, Str8 proc_name) {
+internal VoidProc *dynlib_load_proc(Library lib, Str8 proc_name) {
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str8 proc_name_copy = str8_copy(scratch.arena, proc_name);
 

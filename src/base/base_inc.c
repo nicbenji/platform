@@ -5,9 +5,9 @@
 #include "base_files.c"
 
 #if OS_WINDOWS
-#  include "../win32/base_win32.c"
+#  include "../os/win32/base_win32.c"
 #elif OS_LINUX
-#  include "../linux/base_linux.c"
+#  include "../os/linux/base_linux.c"
 #else
 #  error Missing platform backend for this OS.
 #endif

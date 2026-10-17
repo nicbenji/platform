@@ -98,7 +98,7 @@ internal void mgen_function_loader(Str8 file_dir, Str8 proc_defs_path) {
     str8_list_push(scratch.arena, &loader_decl_parts, str8_lit("internal B32 "));
     str8_list_push(scratch.arena, &loader_decl_parts, lower_lib_prefix);
     str8_list_push(scratch.arena, &loader_decl_parts,
-                   str8_lit("_load_functions(LibraryHandle lib, "));
+                   str8_lit("_load_functions(Library lib, "));
     str8_list_push(scratch.arena, &loader_decl_parts, lib_prefix);
     str8_list_push(scratch.arena, &loader_decl_parts, str8_lit("_Functions *fns)"));
 

@@ -1,6 +1,6 @@
 internal Str8 file_read_all(MemoryArena *arena, Str8 file_path) {
     Str8 result = str8_zero();
-    FileHandle file = file_open(file_path, FileFlag_Read);
+    File file = file_open(file_path, FileFlag_Read);
 
     if (!file_valid(file)) {
         return result;
@@ -28,7 +28,7 @@ internal Str8 file_read_all(MemoryArena *arena, Str8 file_path) {
 internal B32 file_replace_all(Str8 file_path, Str8List string_list) {
     B32 result = false;
 
-    FileHandle file = file_open(file_path,
+    File file = file_open(file_path,
         FileFlag_Write|FileFlag_Truncate|FileFlag_MakeDirs);
     if (!file_valid(file)) return result;
 
@@ -52,7 +52,7 @@ internal B32 file_replace_all(Str8 file_path, Str8List string_list) {
 // TODO: what to do when str.length == 0
 internal B32 file_append(Str8 file_path, Str8 str) {
     B32 result = false;
-    FileHandle file = file_open(file_path,
+    File file = file_open(file_path,
         FileFlag_Write|FileFlag_Append|FileFlag_MakeDirs);
     if (!file_valid(file)) return result;
 
@@ -64,13 +64,13 @@ internal B32 file_append(Str8 file_path, Str8 str) {
     return result;
 }
 
-internal FileHandle file_zero(void) {
-    FileHandle result = {0};
+internal File file_zero(void) {
+    File result = {0};
     return result;
 }
 
-internal B32 file_valid(FileHandle file) {
-    FileHandle zero_handle = file_zero();
+internal B32 file_valid(File file) {
+    File zero_handle = file_zero();
     B32 result = !MemEqualsStruct(&file, &zero_handle);
     return result;
 }

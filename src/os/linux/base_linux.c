@@ -1,5 +1,3 @@
-#include "window_manager_wayland.c"
-
 /* System props */
 
 global_var U64 g_page_size;
@@ -34,8 +32,8 @@ internal void mem_free(void *ptr, U64 size) {
 
 /* Files */
 
-internal FileHandle file_open(Str8 file_path, FileFlags flags) {
-    FileHandle result = file_zero();
+internal File file_open(Str8 file_path, FileFlags flags) {
+    File result = file_zero();
     int open_flags = 0;
 
     if ((flags & FileFlag_Read) && (flags & FileFlag_Write)) {
@@ -74,12 +72,12 @@ internal FileHandle file_open(Str8 file_path, FileFlags flags) {
     return result;
 }
 
-internal void file_close(FileHandle file) {
+internal void file_close(File file) {
     int fd = (int)file.u64[0];
     close(fd);
 }
 
-internal U64 file_get_size(FileHandle file) {
+internal U64 file_get_size(File file) {
     struct stat file_stats;
     int fd = (int)file.u64[0];
     fstat(fd, &file_stats);
@@ -87,7 +85,7 @@ internal U64 file_get_size(FileHandle file) {
     return result;
 }
 
-internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
+internal U64 file_read(File file, U64 start, U64 end, void *buffer) {
     Assert(end >= start);
     int fd = (int)file.u64[0];
 
@@ -110,7 +108,7 @@ internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer) {
     return bytes_read;
 }
 
-internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
+internal U64 file_write(File file, U64 start, U64 end, void *buffer) {
     Assert(end >= start);
     int fd = (int)file.u64[0];
 
@@ -135,18 +133,18 @@ internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer) {
 
 /* Dynamic libs */
 
-internal LibraryHandle dynlib_load(Str8 lib_path) {
+internal Library dynlib_load(Str8 lib_path) {
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str8 lib_path_copy = str8_copy(scratch.arena, lib_path);
 
     void *dynlib = dlopen((const char *)lib_path_copy.begin, RTLD_NOW);
-    LibraryHandle result = { (U64)dynlib };
+    Library result = { (U64)dynlib };
 
     thread_ctx_scratch_end(scratch);
     return result;
 }
 
-internal VoidProc *dynlib_load_proc(LibraryHandle lib, Str8 proc_name) {
+internal VoidProc *dynlib_load_proc(Library lib, Str8 proc_name) {
     MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
     Str8 proc_name_copy = str8_copy(scratch.arena, proc_name);
 
@@ -170,23 +168,15 @@ int main(int argc, char **argv) {
     ThreadContext *main_thread_ctx = thread_ctx();
     thread_ctx_set(main_thread_ctx);
 
-#if !BUILD_CLI // TODO: temporary, probs should just build entire windowing abstraction
     const char *window_manager = getenv("XDG_SESSION_TYPE");
     if (strcmp(window_manager, "wayland") == 0) {
 
-        int rc = wl_init();
-        if (rc != 0) {
-            return 420;
-        }
-
     } else if (strcmp(window_manager, "x11") == 0) {
-
 
     } else {
         // TODO: diagnostic + error msg
         return 69;
     }
-#endif
 
     int result = main_entrypoint(argc, utf8_args);
     return result;

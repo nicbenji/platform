@@ -1,6 +1,6 @@
 typedef struct {
     U64 u64[1];
-} FileHandle;
+} File;
 
 // TODO: maybe add MakeDirs flag for more convenience in usage
 typedef enum {
@@ -17,16 +17,16 @@ internal Str8 file_read_all(MemoryArena *arena, Str8 file_path);
 internal B32 file_replace_all(Str8 file_path, Str8List string_list);
 internal B32 file_append(Str8 file_path, Str8 str);
 
-internal FileHandle file_zero(void);
-internal B32 file_valid(FileHandle file);
+internal File file_zero(void);
+internal B32 file_valid(File file);
 
 // NOTE: OS-specific impl
-internal FileHandle file_open(Str8 file_path, FileFlags flags);
-internal void file_close(FileHandle file);
-internal U64 file_get_size(FileHandle file);
+internal File file_open(Str8 file_path, FileFlags flags);
+internal void file_close(File file);
+internal U64 file_get_size(File file);
 // TODO: probably more nicely chunked reads -> profiler needed
-internal U64 file_read(FileHandle file, U64 start, U64 end, void *buffer);
-internal U64 file_write(FileHandle file, U64 start, U64 end, void *buffer);
+internal U64 file_read(File file, U64 start, U64 end, void *buffer);
+internal U64 file_write(File file, U64 start, U64 end, void *buffer);
 
 
 

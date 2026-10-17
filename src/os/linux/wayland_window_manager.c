@@ -2,7 +2,7 @@ typedef enum {
     Wl_SurfaceState_None,
     Wl_SurfaceState_AckedConfigure,
     Wl_SurfaceState_Attached,
-} Wl_SurfaceState
+} Wl_SurfaceState;
 
 typedef struct {
     U32 wl_registry;
@@ -23,13 +23,13 @@ typedef struct {
     U8 *shm_pool_data;
 
     Wl_SurfaceState surface_state;
-} Wl_State
+} Wl_State;
 
 global_var U32 wl_curr_id = 0;
 
 #define WlBufWrite(T, buf, buf_size, val) do { \
     *((T *)(buf)) = (val); \
-    (buf_size) += sizeof(U32); \
+    (buf_size) += sizeof(T); \
 } while(0)
 
 internal int wl_init(void) {

@@ -14,9 +14,9 @@
 #include "base_files.h"
 
 #if OS_WINDOWS
-    #include "../win32/base_win32.h"
+    #include "../os/win32/base_win32.h"
 #elif OS_LINUX
-    #include "../linux/base_linux.h"
+    #include "../os/linux/base_linux.h"
 #else
     #error Missing platform backend for this OS.
 #endif
