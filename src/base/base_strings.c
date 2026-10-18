@@ -37,7 +37,7 @@ internal Str16 str16(U16 *begin, U64 length) {
 internal Str8 str8_copy(MemoryArena *arena, Str8 utf8_str) {
     Str8 result;
     result.length = utf8_str.length;
-    result.begin = mem_arena_push_array(arena, U8, result.length + 1);
+    result.begin = mem_arena_push_no_zero(arena, U8, result.length + 1);
     MemCopy(result.begin, utf8_str.begin, result.length);
     result.begin[result.length] = '\0';
     return result;
@@ -82,7 +82,7 @@ internal Str8 str8_from_str16(MemoryArena *arena, Str16 utf16_str) {
     if (utf16_str.length == 0) return result;
 
     U64 alloc_size = utf16_str.length * 3;
-    U8 *utf8_str = mem_arena_push_array(arena, U8, alloc_size + 1); // +1 for '\0'
+    U8 *utf8_str = mem_arena_push_no_zero(arena, U8, alloc_size + 1); // +1 for '\0'
 
     U16 *at = utf16_str.begin;
     U16 *one_past_last = at + utf16_str.length;
@@ -105,7 +105,7 @@ internal Str16 str16_from_str8(MemoryArena *arena, Str8 utf8_str) {
     if (utf8_str.length == 0) return result;
 
     U64 alloc_size = utf8_str.length * 2;
-    U16 *utf16_str = mem_arena_push_array(arena, U16, alloc_size + 1); // +1 for '\0'
+    U16 *utf16_str = mem_arena_push_no_zero(arena, U16, alloc_size + 1); // +1 for '\0'
 
     U8 *at = utf8_str.begin;
     U8 *one_past_last = at + utf8_str.length;
@@ -260,8 +260,8 @@ internal Str8List str8_list_zero(void) {
 }
 
 internal Str8ListNode *str8_list_push(MemoryArena *arena, Str8List *list, Str8 str) {
-    Str8ListNode *new = mem_arena_push_array(arena, Str8ListNode, 1);
-    sll_queue_push_back(list->first, list->last, new);
+    Str8ListNode *new = mem_arena_push_no_zero(arena, Str8ListNode, 1);
+    sll_queue_append(list->first, list->last, new);
     ++list->node_count;
     list->total_length += str.length;
     new->str = str;
@@ -317,7 +317,7 @@ internal Str8 str8_list_join(MemoryArena *arena, Str8List list, Str8Joiner *opti
         + joiner.prefix.length
         + joiner.postfix.length
         + (separator_count * joiner.separator.length);
-    result.begin = mem_arena_push_array(arena, U8, result.length + 1);
+    result.begin = mem_arena_push_no_zero(arena, U8, result.length + 1);
 
     U8 *concat_at = result.begin;
     MemCopy(concat_at, joiner.prefix.begin, joiner.prefix.length);

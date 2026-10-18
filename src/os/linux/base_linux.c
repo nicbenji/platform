@@ -59,7 +59,7 @@ internal File file_open(Str8 file_path, FileFlags flags) {
     }
     open_flags |= O_CLOEXEC;
 
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
     Str8 path_copy = str8_copy(scratch.arena, file_path);
 
     // TODO: correct file permissions
@@ -92,7 +92,7 @@ internal U64 file_read(File file, U64 start, U64 end, void *buffer) {
     U64 bytes_read = 0;
     U64 left_to_read = end - start;
     for (; left_to_read > 0; ) {
-        S64 read_result = pread(
+        I64 read_result = pread(
             fd, (U8 *)buffer + bytes_read,
             left_to_read, s64_safe_cast(start + bytes_read)
         );
@@ -115,7 +115,7 @@ internal U64 file_write(File file, U64 start, U64 end, void *buffer) {
     U64 bytes_written = 0;
     U64 left_to_write = end - start;
     for (; bytes_written < left_to_write;) {
-        S64 write_result = pwrite(
+        I64 write_result = pwrite(
             fd, (U8 *)buffer + bytes_written,
             left_to_write, s64_safe_cast(start + bytes_written)
         );
@@ -134,7 +134,7 @@ internal U64 file_write(File file, U64 start, U64 end, void *buffer) {
 /* Dynamic libs */
 
 internal Library dynlib_load(Str8 lib_path) {
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
     Str8 lib_path_copy = str8_copy(scratch.arena, lib_path);
 
     void *dynlib = dlopen((const char *)lib_path_copy.begin, RTLD_NOW);
@@ -145,7 +145,7 @@ internal Library dynlib_load(Str8 lib_path) {
 }
 
 internal VoidProc *dynlib_load_proc(Library lib, Str8 proc_name) {
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
     Str8 proc_name_copy = str8_copy(scratch.arena, proc_name);
 
     void *dynlib = (void *)lib.u64[0];
@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 
     MemoryArena *linux_arena = mem_arena_default();
 
-    Str8 *utf8_args = mem_arena_push_array(linux_arena, Str8, (U64)argc);
+    Str8 *utf8_args = mem_arena_push_no_zero(linux_arena, Str8, (U64)argc);
     for (int i = 0; i < argc; ++i) {
         utf8_args[i] = str8_from_cstr(argv[i]);
     }

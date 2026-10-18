@@ -7,7 +7,7 @@ internal Str8 file_read_all(MemoryArena *arena, Str8 file_path) {
     }
 
     U64 file_size = file_get_size(file);
-    result.begin = mem_arena_push_array(arena, U8, file_size);
+    result.begin = mem_arena_push_no_zero(arena, U8, file_size);
     result.length = file_size;
 
     // TODO: proper buffering
@@ -32,7 +32,7 @@ internal B32 file_replace_all(Str8 file_path, Str8List string_list) {
         FileFlag_Write|FileFlag_Truncate|FileFlag_MakeDirs);
     if (!file_valid(file)) return result;
 
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
 
     // TODO: proper buffering / iterating over each string instead
     Str8 to_write = str8_list_join(scratch.arena, string_list, 0);

@@ -154,8 +154,8 @@ internal GLFWwindow *glfw_init(void) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPEN_GL_VERSION_MINOR);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    S32 window_width = 1200;
-    S32 window_height = 780;
+    I32 window_width = 1200;
+    I32 window_height = 780;
     GLFWwindow *window = glfwCreateWindow(window_width, window_height, "AuzioEditore", 0, 0);
     if (window == 0) {
         // TODO: logging

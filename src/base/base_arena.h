@@ -18,9 +18,9 @@ internal void mem_arena_free(MemoryArena *arena);
 
 internal void *mem_arena_push(MemoryArena *arena, U64 size, U64 align, B32 zero);
 
-#define mem_arena_push_array(arena, T, count) \
+#define mem_arena_push_no_zero(arena, T, count) \
     mem_arena_push(arena, sizeof(T) * (count), Max(AlignOf(T), MEM_ARENA_DEFAULT_ALIGN), false)
-#define mem_arena_push_array_zero(arena, T, count) \
+#define mem_arena_push_zero(arena, T, count) \
     mem_arena_push(arena, sizeof(T) * (count), Max(AlignOf(T), MEM_ARENA_DEFAULT_ALIGN), true)
 
 internal void mem_arena_clear(MemoryArena *arena);
@@ -30,10 +30,10 @@ internal void mem_arena_pop_to(MemoryArena *arena, U64 pos);
 typedef struct {
     MemoryArena *arena;
     U64 prior_pos;
-} MemArena_Temp;
+} TempArena;
 
-internal MemArena_Temp mem_arena_temp_begin(MemoryArena *arena);
-internal void mem_arena_temp_end(MemArena_Temp temp);
+internal TempArena mem_arena_temp_begin(MemoryArena *arena);
+internal void mem_arena_temp_end(TempArena temp);
 
 
 #endif  // BASE_ARENA_H_

@@ -4,7 +4,7 @@
 #define IsNil(sentinel, ptr) ((ptr) == 0 || (ptr) == sentinel)
 #define SetNil(sentinel, ptr) ((ptr) = sentinel)
 
-#define sll_queue_push_back_ex(sentinel, first, last, node, next) \
+#define sll_queue_append_ex(sentinel, first, last, node, next) \
     do { \
         if (IsNil(sentinel, first)) { \
             (first) = (last) = (node); \
@@ -15,7 +15,7 @@
             SetNil(sentinel, (node)->next); \
         } \
     } while(0)
-#define sll_queue_push_back(first, last, node) \
-    sll_queue_push_back_ex(0, first, last, node, next)
+#define sll_queue_append(first, last, node) \
+    sll_queue_append_ex(0, first, last, node, next)
 
 #endif  // LINKED_LIST_H_

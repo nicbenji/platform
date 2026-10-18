@@ -28,7 +28,7 @@ internal Str8 mgen_proc_name_to_type(MemoryArena *arena, Str8 proc_name) {
     // TODO: simple concat method? or should always go through Str8List? maybe Str8Builder???
     Str8 result = str8_zero();
     result.length = proc_name.length + FN_TYPE_POSTFIX.length;
-    result.begin = mem_arena_push_array(arena, U8, result.length);
+    result.begin = mem_arena_push_no_zero(arena, U8, result.length);
     MemCopy(result.begin, proc_name.begin, proc_name.length);
     MemCopy(result.begin + proc_name.length, FN_TYPE_POSTFIX.begin, FN_TYPE_POSTFIX.length);
     return result;
@@ -42,7 +42,7 @@ internal Str8 mgen_trim_proc_prefix(Str8 proc_name) {
 
 // TODO: handle possible write errors here? or return false if error??
 internal void mgen_function_loader(Str8 file_dir, Str8 proc_defs_path) {
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
 
     Str8 in_file_funcs = file_read_all(scratch.arena, proc_defs_path);
     Assert(in_file_funcs.length > 0); // TODO: error?

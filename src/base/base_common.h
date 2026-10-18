@@ -13,15 +13,15 @@ typedef uint16_t U16;
 typedef uint32_t U32;
 typedef uint64_t U64;
 
-typedef int8_t S8;
-typedef int16_t S16;
-typedef int32_t S32;
-typedef int64_t S64;
+typedef int8_t I8;
+typedef int16_t I16;
+typedef int32_t I32;
+typedef int64_t I64;
 
-typedef S8 B8;
-typedef S16 B16;
-typedef S32 B32;
-typedef S64 B64;
+typedef I8 B8;
+typedef I16 B16;
+typedef I32 B32;
+typedef I64 B64;
 
 #define true 1
 #define false 0
@@ -170,7 +170,7 @@ internal U64 sys_info_get_page_size(void);
 /* Type conversions */
 
 internal U16 u16_safe_cast(U32 x);
-internal S64 s64_safe_cast(U64 x);
+internal I64 s64_safe_cast(U64 x);
 
 /* Constants */
 
@@ -190,15 +190,15 @@ internal S64 s64_safe_cast(U64 x);
 #define U16_MAX ((U16)0xffffu)
 #define U8_MAX ((U8)0xffu)
 
-#define S64_MAX ((S64)0x7fffffffffffffffll)
-#define S32_MAX ((S32)0x7fffffff)
-#define S16_MAX ((S16)0x7fff)
-#define S8_MAX ((S8)0x7f)
+#define I64_MAX ((I64)0x7fffffffffffffffll)
+#define I32_MAX ((I32)0x7fffffff)
+#define I16_MAX ((I16)0x7fff)
+#define I8_MAX ((I8)0x7f)
 
-#define S64_MIN ((S64)-0x7fffffffffffffffll - 1)
-#define S32_MIN ((S32)-0x7fffffff - 1)
-#define S16_MIN ((S16)-0x7fff - 1)
-#define S8_MIN ((S8)-0x7f - 1)
+#define I64_MIN ((I64)-0x7fffffffffffffffll - 1)
+#define I32_MIN ((I32)-0x7fffffff - 1)
+#define I16_MIN ((I16)-0x7fff - 1)
+#define I8_MIN ((I8)-0x7f - 1)
 
 
 internal inline F32

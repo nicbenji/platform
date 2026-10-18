@@ -30,7 +30,7 @@ internal void mem_free(void *ptr, U64 size) {
 
 internal File file_open(Str8 file_path, FileFlags flags) {
     File result = file_zero();
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
     Str16 file_path16 = str16_from_str8(scratch.arena, file_path);
 
     DWORD desired_access = 0;
@@ -142,7 +142,7 @@ internal U64 file_write(File file, U64 start, U64 end, void *buffer) {
 /* Dynamic libs */
 
 internal Library dynlib_load(Str8 lib_path) {
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
     Str16 lib_path16 = str16_from_str8(scratch.arena, lib_path);
 
     HMODULE dynlib = LoadLibraryW((const WCHAR *)lib_path16.begin);
@@ -153,7 +153,7 @@ internal Library dynlib_load(Str8 lib_path) {
 }
 
 internal VoidProc *dynlib_load_proc(Library lib, Str8 proc_name) {
-    MemArena_Temp scratch = thread_ctx_scratch_begin(0, 0);
+    TempArena scratch = thread_ctx_scratch_begin(0, 0);
     Str8 proc_name_copy = str8_copy(scratch.arena, proc_name);
 
     HMODULE dynlib = (HMODULE)lib.u64[0];
@@ -180,7 +180,7 @@ int w32_entrypoint(int argc, WCHAR **wargv) {
     MemoryArena *w32_arena = mem_arena_default();
 
     // TODO: platform-independent cli args?
-    Str8 *utf8_args = mem_arena_push_array(w32_arena, Str8, argc);
+    Str8 *utf8_args = mem_arena_push_no_zero(w32_arena, Str8, argc);
     for (int i = 0; i < argc; ++i) {
         utf8_args[i] = w32_wstr_to_str8(w32_arena, wargv[i]);
     }

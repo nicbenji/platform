@@ -1,6 +1,5 @@
 // TODO: large pages
 // TODO: asan
-// TODO: scratch arena
 
 internal MemoryArena *mem_arena(U64 reserve_size, U64 commit_size) {
     Assert(reserve_size >= commit_size);
@@ -75,11 +74,11 @@ internal void mem_arena_pop_to(MemoryArena *arena, U64 pos) {
     arena->pos = new_pos;
 }
 
-internal MemArena_Temp mem_arena_temp_begin(MemoryArena *arena) {
-    MemArena_Temp result = { arena, arena->pos };
+internal TempArena mem_arena_temp_begin(MemoryArena *arena) {
+    TempArena result = { arena, arena->pos };
     return result;
 }
 
-internal void mem_arena_temp_end(MemArena_Temp temp) {
+internal void mem_arena_temp_end(TempArena temp) {
     mem_arena_pop_to(temp.arena, temp.prior_pos);
 }

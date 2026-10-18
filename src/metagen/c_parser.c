@@ -16,7 +16,7 @@ internal Str8 cparse_id(C_Parser *parser) {
 }
 
 internal C_Type *cparse_type(C_Parser *parser) {
-    C_Type *result = mem_arena_push_array(parser->arena, C_Type, 1);
+    C_Type *result = mem_arena_push_no_zero(parser->arena, C_Type, 1);
     if (parser->at->kind == TokenKind_Keyword && str8_equals(parser->at->str, str8_lit("const"))) {
         result->is_const = true;
         ++parser->at;
@@ -42,7 +42,7 @@ internal C_Type *cparse_type(C_Parser *parser) {
 }
 
 internal C_ParamArray *cparse_params(C_Parser *parser) {
-    C_ParamArray *result = mem_arena_push_array_zero(parser->arena, C_ParamArray, 1);
+    C_ParamArray *result = mem_arena_push_zero(parser->arena, C_ParamArray, 1);
 
     B32 only_void = parser->at->kind == TokenKind_Identifier
         && str8_equals(parser->at->str, str8_lit("void"))
@@ -53,7 +53,7 @@ internal C_ParamArray *cparse_params(C_Parser *parser) {
     }
 
     for (; parser->at->kind != TokenKind_CloseParen;) {
-        C_Param *curr_param = mem_arena_push_array(parser->arena, C_Param, 1);
+        C_Param *curr_param = mem_arena_push_no_zero(parser->arena, C_Param, 1);
 
         curr_param->type = cparse_type(parser);
         if (!curr_param->type) {
@@ -95,7 +95,7 @@ internal B32 cparse_end(C_Parser *parser) {
 
 internal C_ProcDeclaration *cparse_declaration(C_Parser *parser) {
     C_ProcDeclaration *result
-        = mem_arena_push_array(parser->arena, C_ProcDeclaration, 1);
+        = mem_arena_push_no_zero(parser->arena, C_ProcDeclaration, 1);
 
     result->return_type = cparse_type(parser);
     if (!result->return_type) {

@@ -25,8 +25,8 @@ internal U16 u16_safe_cast(U32 x) {
     return result;
 }
 
-internal S64 s64_safe_cast(U64 x) {
-    AssertAlways(x <= S64_MAX);
-    S64 result = (S64)x;
+internal I64 s64_safe_cast(U64 x) {
+    AssertAlways(x <= I64_MAX);
+    I64 result = (I64)x;
     return result;
 }

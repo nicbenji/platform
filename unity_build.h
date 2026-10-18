@@ -4,6 +4,7 @@
 // Include file to make lsp not complain (too much)
 
 #include "src/base/base_inc.h"
+#include "src/os/window_manager/window_manager_inc.h"
 #include "src/metagen/metagen_inc.h"
 
 #if OS_LINUX

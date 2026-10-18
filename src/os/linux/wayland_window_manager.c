@@ -1,30 +1,3 @@
-typedef enum {
-    Wl_SurfaceState_None,
-    Wl_SurfaceState_AckedConfigure,
-    Wl_SurfaceState_Attached,
-} Wl_SurfaceState;
-
-typedef struct {
-    U32 wl_registry;
-    U32 wl_shm;
-    U32 wl_shm_pool;
-    U32 wl_buffer;
-    U32 xdg_wm_base;
-    U32 xdg_surface;
-    U32 wl_compositor;
-    U32 wl_surface;
-    U32 xdg_toplevel;
-
-    U32 stride;
-    U32 width;
-    U32 height;
-
-    U32 shm_pool_size;
-    U8 *shm_pool_data;
-
-    Wl_SurfaceState surface_state;
-} Wl_State;
-
 global_var U32 wl_curr_id = 0;
 
 #define WlBufWrite(T, buf, buf_size, val) do { \
@@ -110,14 +83,14 @@ internal int wl_init(void) {
     ++wl_curr_id;
     WlBufWrite(U32, msg, msg_size, wl_curr_id);
 
-    if (send(wl_fd, msg, msg_size, MSG_DONTWAIT) != (S64)msg_size) {
+    if (send(wl_fd, msg, msg_size, MSG_DONTWAIT) != (I64)msg_size) {
         return 1;
     }
 
     printf("-> wl_display@%u.get_registry: wl_registry=%u\n",
          wl_display_object_id, wl_curr_id);
 
-    Wl_State wl_state = {0};
+    WL_State wl_state = {0};
     wl_state.wl_registry = wl_curr_id;
     wl_state.width = 1280;
     wl_state.height = 720;
