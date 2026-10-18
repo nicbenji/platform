@@ -28,7 +28,7 @@ internal void mem_arena_free(MemoryArena *arena) {
     mem_free(arena, arena->reserved);
 }
 
-internal void * mem_arena_push(
+internal void *mem_arena_push(
     MemoryArena *arena,
     U64 size, U64 align, B32 zero
 ) {

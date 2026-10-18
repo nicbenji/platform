@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef uint8_t U8;
 typedef uint16_t U16;
@@ -122,7 +123,7 @@ internal B32 mem_is_zero(void *ptr, U64 size);
 
 #define StaticAssert(condition, ID) global_var U8 Glue(ID, __LINE__)[(condition) ? 1 : -1]
 
-#define Unreachable Assert(!"Invalid code path")
+#define Unreachable Assert(!"Unreachable code path")
 #define UnreachableDefaultCase default: { Unreachable; } break
 #define Todo Assert(!"Todo")
 #define NoOp ((void)0)

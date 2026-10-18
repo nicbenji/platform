@@ -4,7 +4,8 @@ set "ROOT=%~dp0"
 set compilerFlags=-nologo -MTd -Gm- -GR- -EHa- -Od -FC -Z7
 set warnings=-W4 -wd4201 -wd4100 -wd4189
 set buildFlags=-DBUILD_DEBUG=1
-set linkerFlags=-opt:ref -incremental:no User32.lib
+REM TODO: dynamically link instead? -> only needed symbols
+set linkerFlags=-opt:ref -incremental:no User32.lib Gdi32.lib
 set optimizationFlags=-O2 -Oi -fp:fast
 set buildPath="%ROOT%build"
 set assetPath="%ROOT%assets"
