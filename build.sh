@@ -26,5 +26,4 @@ cd $ASSET_PATH
 cd $BUILD_PATH
 
 clang $COMPILE_FLAGS $WARNINGS $OPTIMIZATION_FLAGS $MAIN_FILE \
-    -lwayland-client \
     -o $PROJECT_NAME.out
