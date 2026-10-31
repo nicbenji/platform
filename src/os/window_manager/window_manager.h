@@ -18,6 +18,8 @@ typedef struct {
   WM_Event *last;
 } WM_EventList;
 
+internal WM_Window wm_window_zero(void);
+
 internal void wm_event_list_push(MemoryArena *arena, WM_EventList *events, WM_EventKind kind);
 
 // NOTE: OS-specific procedures

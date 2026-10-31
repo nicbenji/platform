@@ -168,17 +168,6 @@ int main(int argc, char **argv) {
     ThreadContext *main_thread_ctx = thread_ctx();
     thread_ctx_set(main_thread_ctx);
 
-    const char *window_manager = getenv("XDG_SESSION_TYPE");
-    if (strcmp(window_manager, "wayland") == 0) {
-
-    } else if (strcmp(window_manager, "x11") == 0) {
-
-    } else {
-        // TODO: diagnostic + error msg
-        return 69;
-    }
-
     int result = main_entrypoint(argc, utf8_args);
     return result;
 }
-

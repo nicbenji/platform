@@ -96,7 +96,7 @@ internal LRESULT w32_main_window_cb(
     return result;
 }
 
-WM_Window wm_open_main_window(Str8 app_name, U32 width, U32 height) {
+internal WM_Window wm_open_main_window(Str8 app_name, U32 width, U32 height) {
     g_w32_wm_arena = mem_arena_default();
     HMODULE instance = GetModuleHandleW(0);
     TempArena scratch = thread_ctx_scratch_begin(0, 0);
