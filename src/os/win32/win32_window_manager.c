@@ -1,7 +1,8 @@
-global_var W32_WM_Window g_w32_main_window;
-global_var MemoryArena *g_w32_wm_arena;
-global_var BITMAPINFO g_bitmap_info;
-global_var U8 *g_bitmap_memory;
+global_var W32_WM_State w32_wm_state;
+
+internal WM_Backbuffer *wm_get_backbuffer(WM_Window window) {
+    return &w32_wm_state.backbuffer;
+}
 
 internal Vec2_I32 w32_get_window_dimension(HWND window) {
     RECT client_rect;
@@ -13,36 +14,50 @@ internal Vec2_I32 w32_get_window_dimension(HWND window) {
     return result;
 }
 
+// TODO: probs give backbuffer as param
 internal void w32_resize_bitmap_section(I32 width, I32 height) {
-    U8 bytes_per_pixel = 4;
-
-    // FIXME: extra arena for this or wut? just malloc/free this for now? capacity to know if realloc is needed?
-    if (g_bitmap_memory) {
-        // g_bitmap_memory = mem_arena_realloc(g_w32_wm_arena, g_bitmap_memory);
-    } else {
-        g_bitmap_memory = mem_arena_push_no_zero(g_w32_wm_arena, U8, width * height * bytes_per_pixel);
+    // TODO: store and check buffer size to know if new allocation is needed?
+    if (w32_wm_state.backbuffer.memory) {
+        VirtualFree(w32_wm_state.backbuffer.memory, 0, MEM_RELEASE);
     }
 
-    g_bitmap_info.bmiHeader.biSize = sizeof(g_bitmap_info.bmiHeader);
-    g_bitmap_info.bmiHeader.biWidth = width;
-    // NOTE: negative biHeight makes bitmap top left be P(0,0) and become positive downwards
-    g_bitmap_info.bmiHeader.biHeight = -height;
-    g_bitmap_info.bmiHeader.biPlanes = 1;
-    g_bitmap_info.bmiHeader.biBitCount = bytes_per_pixel * 8;
-    g_bitmap_info.bmiHeader.biCompression = BI_RGB;
+    w32_wm_state.backbuffer.width = width;
+    w32_wm_state.backbuffer.height = height;
 
+    w32_wm_state.bitmap_info.bmiHeader.biSize = sizeof(w32_wm_state.bitmap_info.bmiHeader);
+    w32_wm_state.bitmap_info.bmiHeader.biWidth = width;
+    // NOTE: negative biHeight makes bitmap top left be P(0,0) and become positive downwards
+    w32_wm_state.bitmap_info.bmiHeader.biHeight = -height;
+    w32_wm_state.bitmap_info.bmiHeader.biPlanes = 1;
+    w32_wm_state.bitmap_info.bmiHeader.biBitCount = (WORD)(w32_wm_state.backbuffer.bytes_per_pixel * 8);
+    w32_wm_state.bitmap_info.bmiHeader.biCompression = BI_RGB;
+
+    // TODO: possible overflow
+    int memory_size = (width * height) * w32_wm_state.backbuffer.bytes_per_pixel;
+    w32_wm_state.backbuffer.memory = VirtualAlloc(0, memory_size, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
 }
 
+// TODO: use parameters
 internal void w32_display_buffer(HDC device_ctx, I32 x, I32 y, I32 width, I32 height) {
+    Vec2_I32 dims = w32_get_window_dimension(w32_wm_state.w32_main_window.handle);
+
     StretchDIBits(
         device_ctx,
-        x, y, width, height,
-        x, y, width, height,
-        g_bitmap_memory,
-        &g_bitmap_info,
+        0, 0, dims.x, dims.y,
+        0, 0, w32_wm_state.backbuffer.width, w32_wm_state.backbuffer.height,
+        w32_wm_state.backbuffer.memory,
+        &w32_wm_state.bitmap_info,
         DIB_RGB_COLORS, SRCCOPY
     );
 }
+
+internal void wm_present_backbuffer(WM_Window window) {
+    HWND window_handle = (HWND)window.u64[0];
+    HDC device_ctx = GetDC(window_handle);
+    w32_display_buffer(device_ctx, 0, 0, w32_wm_state.backbuffer.width, w32_wm_state.backbuffer.height);
+    ReleaseDC(window_handle, device_ctx);
+}
+
 
 internal LRESULT w32_main_window_cb(
     HWND window, UINT message_code,
@@ -51,11 +66,15 @@ internal LRESULT w32_main_window_cb(
     LRESULT result = 0;
 
     switch (message_code) {
+        default: {
+            result = DefWindowProcW(window, message_code, w_param, l_param);
+        } break;
+
         case WM_DESTROY: {
         } break;
 
         case WM_CLOSE: {
-            wm_event_list_push(g_w32_wm_arena, &g_w32_main_window.events, WM_EventKind_WindowClose);
+            wm_event_list_push(w32_wm_state.w32_wm_arena, &w32_wm_state.w32_main_window.events, WM_EventKind_WindowClose);
         } break;
 
         case WM_ACTIVATEAPP: {
@@ -85,22 +104,37 @@ internal LRESULT w32_main_window_cb(
             EndPaint(window, &ps);
         } break;
 
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_KEYDOWN:
+        case WM_KEYUP: {
+            U32 vk_code = (U32)w_param;
+            B32 was_down = (l_param & Bit(31)) != 0;
+            B32 is_down = (l_param & Bit(32)) == 0;
 
-        default: {
-            result = DefWindowProcW(window, message_code, w_param, l_param);
+            B32 released = false;
+            if (was_down && !is_down) {
+                released = true;
+            }
+
+            WM_Event *event = wm_event_list_push(
+                w32_wm_state.w32_wm_arena, &w32_wm_state.w32_main_window.events,
+                released ? WM_EventKind_KeyRelease : WM_EventKind_KeyPress
+            );
+            // TODO: NEXT: add keys
         } break;
-
 
     }
 
     return result;
 }
 
-internal WM_Window wm_open_main_window(Str8 app_name, U32 width, U32 height) {
-    g_w32_wm_arena = mem_arena_default();
+internal WM_Window wm_open_main_window(Str8 title, U32 width, U32 height) {
+    w32_wm_state.w32_wm_arena = mem_arena_default();
+    w32_wm_state.backbuffer.bytes_per_pixel = 4;
     HMODULE instance = GetModuleHandleW(0);
     TempArena scratch = thread_ctx_scratch_begin(0, 0);
-    Str16 app_name16 = str16_from_str8(scratch.arena, app_name);
+    Str16 app_name16 = str16_from_str8(scratch.arena, title);
 
     // TODO: custom window title
     WNDCLASSW window_class = {0};
@@ -128,14 +162,14 @@ internal WM_Window wm_open_main_window(Str8 app_name, U32 width, U32 height) {
     }
     thread_ctx_scratch_end(scratch);
 
-    g_w32_main_window.handle = window;
+    w32_wm_state.w32_main_window.handle = window;
     WM_Window result = { (U64)window };
     return result;
 }
 
-// TODO: make this actually get the window via handle in future
+// TODO: make this actually get the window via handle in future? per window events or global/per process?
 internal WM_EventList wm_get_events(MemoryArena *arena, WM_Window window) {
-    MemZeroStruct(&g_w32_main_window.events);
+    MemZeroStruct(&w32_wm_state.w32_main_window.events);
 
     for (MSG msg;
         PeekMessageW(&msg, (HWND)window.u64[0], 0, 0, PM_REMOVE) > 0;
@@ -143,8 +177,9 @@ internal WM_EventList wm_get_events(MemoryArena *arena, WM_Window window) {
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
         if (msg.message == WM_QUIT) {
-            wm_event_list_push(arena, &g_w32_main_window.events, WM_EventKind_WindowClose);
+            wm_event_list_push(arena, &w32_wm_state.w32_main_window.events, WM_EventKind_WindowClose);
         }
     }
-    return g_w32_main_window.events;
+
+    return w32_wm_state.w32_main_window.events;
 }
